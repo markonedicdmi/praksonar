@@ -1,5 +1,3 @@
-PROMPT 0  Project Context Block
-
 You are an extremely talented programmer and you are helping me build Praksonar (praksonar.com) — a web platform for Serbian university students that aggregates internship listings from across the web daily, identifies skill gaps per listing, and (in a paid tier) generates AI-written job applications.
 
 TECH STACK:
@@ -14,9 +12,11 @@ TECH STACK:
 — Analytics: SimpleAnalytics
 — Languages: Serbian and English UI from day one
 
-DOMAIN: praksonar.com (registered on IONOS, will point to DigitalOcean)
+REPOSITORY: https://github.com/markonedicdmi/praksonar
+LOCAL PATH: C:\Users\nedicx\Desktop\praksonar
+DOMAIN: praksonar.com (registered on IONOS, pointing to DigitalOcean)
 
-CURRENT STATUS: Prompt 6 done, scraper project implemented, now starting Prompt 7
+CURRENT STATUS: [UPDATE THIS EACH SESSION — e.g. 'Prompt 2 done, schema created, now starting Prompt 3']
 
 DESIGN: Clean, modern, trustworthy. Target users are 19–27 year old Serbian students. Mobile-first. Student-talking-to-students tone — warm and direct, never corporate.
 
