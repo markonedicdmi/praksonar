@@ -53,7 +53,7 @@ export default async function RootLayout({
                   {/* Right: Auth */}
                   <div className="flex items-center gap-4">
                     <ThemeSwitcher />
-                    <NavAuth user={session?.user} />
+                    <NavAuth user={session?.user ?? null} />
                   </div>
                 </div>
               </div>

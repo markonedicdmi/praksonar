@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { getSkillGaps, ProfileForGap, Internship } from '@/lib/skillGap';
+import { ProfileForGap, Internship } from '@/lib/skillGap';
 import InternshipCard from '@/components/InternshipCard';
 
 const FIELDS = [
@@ -128,7 +128,7 @@ function InternshipsContent() {
                     .select('internship_id')
                     .eq('user_id', session.user.id);
                 if (savedData) {
-                    setSavedInternships(savedData.map((d: any) => d.internship_id));
+                    setSavedInternships(savedData.map((d: { internship_id: string }) => d.internship_id));
                 }
             }
         };

@@ -52,7 +52,7 @@ export default function OnboardingPage() {
         fetchUser();
     }, [router, supabase]);
 
-    const saveProfileData = async (data: any) => {
+    const saveProfileData = async (data: Record<string, unknown>) => {
         if (!userId) return false;
         setLoading(true);
         const { error } = await supabase

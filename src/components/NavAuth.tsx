@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { type User } from '@supabase/supabase-js';
 
-export default function NavAuth({ user }: { user: any }) {
+export default function NavAuth({ user }: { user: User | null }) {
     const router = useRouter();
     const supabase = createClient();
 

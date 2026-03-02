@@ -1,11 +1,13 @@
+export type LanguageSkill = { lang: string; level?: string };
+
 export type ProfileForGap = {
     skills: string[] | null;
-    languages: any | null; // Expected format: { lang: string, level?: string }[]
+    languages: LanguageSkill[] | null;
 };
 
 export type InternshipForGap = {
     required_skills: string[] | null;
-    required_languages: any | null; // Expected format: { lang: string, level?: string }[]
+    required_languages: LanguageSkill[] | null;
 };
 
 export type Internship = {
@@ -17,7 +19,7 @@ export type Internship = {
     is_international: boolean;
     field: string | null;
     required_skills: string[] | null;
-    required_languages: any;
+    required_languages: LanguageSkill[] | null;
     source_url: string | null;
     source_name: string | null;
     deadline: string | null;
@@ -50,7 +52,7 @@ export function getSkillGaps(
     if (!userProfile) {
         return {
             missingSkills: reqSkills,
-            missingLanguages: reqLangs.map((l: any) => l.lang || 'Nepoznat jezik'),
+            missingLanguages: reqLangs.map((l: LanguageSkill) => l.lang || 'Nepoznat jezik'),
         };
     }
 
@@ -69,7 +71,7 @@ export function getSkillGaps(
 
     // Check missing languages (by name only for now, case-insensitive)
     const userLangNames = userLangs
-        .map((l: any) => l.lang?.toLowerCase().trim())
+        .map((l: LanguageSkill) => l.lang?.toLowerCase().trim())
         .filter(Boolean);
 
     for (const reqLang of reqLangs) {

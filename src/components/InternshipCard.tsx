@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Internship, ProfileForGap, getSkillGaps } from '@/lib/skillGap';
+import { Internship, ProfileForGap, getSkillGaps, LanguageSkill } from '@/lib/skillGap';
 
 interface InternshipCardProps {
     internship: Internship;
@@ -85,7 +85,7 @@ export default function InternshipCard({ internship, userProfile, isLoggedIn, is
                     <div className="mb-3">
                         <p className="text-xs font-medium text-gray-500 mb-1">Jezici:</p>
                         <div className="flex flex-wrap gap-1">
-                            {internship.required_languages.map((lang: any, idx: number) => (
+                            {internship.required_languages.map((lang: LanguageSkill, idx: number) => (
                                 <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
                                     {lang.lang} {lang.level && `(${lang.level})`}
                                 </span>
@@ -119,33 +119,21 @@ export default function InternshipCard({ internship, userProfile, isLoggedIn, is
     );
 }
 
-// Sub-component for clarity
-function GapSection({ internship, userProfile, isLoggedIn, checkedItems, toggleCheck }: any) {
-    const [isOpen, setIsOpen] = useState(false);
-    if (!isLoggedIn) {
-        return (
-            <div className="mt-4 pt-4 border-t border-gray-100 flex-none pb-4">
-                <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wider mb-2">Šta ti nedostaje</h4>
-                <p className="text-sm text-gray-500 italic">Prijavi se da vidiš šta ti nedostaje</p>
+interface GapSectionProps {
+    internship: Internship;
+    userProfile: ProfileForGap | null;
+    isLoggedIn: boolean;
+    checkedItems: Record<string, boolean>;
+    toggleCheck: (item: string, e: React.MouseEvent) => void;
+}
 
-                <CtaSection internship={internship} />
-            </div>
-        );
-    }
+// Sub-component for clarity
+function GapSection({ internship, userProfile, isLoggedIn, checkedItems, toggleCheck }: GapSectionProps) {
+    const [isOpen, setIsOpen] = useState(false);
 
     const reqSkills = internship.required_skills || [];
     const reqLangs = Array.isArray(internship.required_languages) ? internship.required_languages : [];
     const hasNoReqs = reqSkills.length === 0 && reqLangs.length === 0;
-
-    if (hasNoReqs) {
-        return (
-            <div className="mt-4 pt-4 border-t border-gray-100 flex-none pb-4">
-                <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wider mb-2">Šta ti nedostaje</h4>
-                <p className="text-sm text-gray-500 italic">Zahtevi nisu navedeni</p>
-                <CtaSection internship={internship} />
-            </div>
-        );
-    }
 
     const { missingSkills, missingLanguages } = getSkillGaps(userProfile, internship);
     const allGaps = [...missingLanguages, ...missingSkills];
@@ -159,6 +147,27 @@ function GapSection({ internship, userProfile, isLoggedIn, checkedItems, toggleC
             setIsOpen(false);
         }
     }, [remainingCount]);
+
+    if (!isLoggedIn) {
+        return (
+            <div className="mt-4 pt-4 border-t border-gray-100 flex-none pb-4">
+                <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wider mb-2">Šta ti nedostaje</h4>
+                <p className="text-sm text-gray-500 italic">Prijavi se da vidiš šta ti nedostaje</p>
+
+                <CtaSection internship={internship} />
+            </div>
+        );
+    }
+
+    if (hasNoReqs) {
+        return (
+            <div className="mt-4 pt-4 border-t border-gray-100 flex-none pb-4">
+                <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wider mb-2">Šta ti nedostaje</h4>
+                <p className="text-sm text-gray-500 italic">Zahtevi nisu navedeni</p>
+                <CtaSection internship={internship} />
+            </div>
+        );
+    }
 
     if (initialGapsCount === 0) {
         return (
@@ -244,7 +253,7 @@ function GapSection({ internship, userProfile, isLoggedIn, checkedItems, toggleC
     );
 }
 
-function CtaSection({ internship, isReady = false }: { internship: any, isReady?: boolean }) {
+function CtaSection({ internship, isReady = false }: { internship: Internship, isReady?: boolean }) {
     return (
         <div className="mt-2 flex items-center justify-between">
             <div className="text-sm text-gray-500">
