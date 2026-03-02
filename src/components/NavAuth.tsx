@@ -18,7 +18,7 @@ export default function NavAuth({ user }: { user: User | null }) {
     if (user) {
         return (
             <div className="flex items-center space-x-4">
-                <Link href="/profile" className="h-8 w-8 rounded-full bg-sonar-border flex items-center justify-center text-sonar-signal font-bold hover:bg-sonar-signal hover:text-sonar-bg transition-colors">
+                <Link href="/profile" className="h-8 w-8 rounded-full bg-sonar-border flex items-center justify-center text-sonar-signal font-medium hover:bg-sonar-signal hover:text-sonar-bg transition-colors">
                     {user.email?.charAt(0).toUpperCase() || 'U'}
                 </Link>
                 <button

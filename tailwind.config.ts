@@ -12,19 +12,17 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        sonar: {
-          bg: "rgb(var(--sonar-bg) / <alpha-value>)",
-          surface: "rgb(var(--sonar-surface) / <alpha-value>)",
-          signal: "rgb(var(--sonar-signal) / <alpha-value>)",
-          white: "rgb(var(--sonar-white) / <alpha-value>)",
-          muted: "rgb(var(--sonar-muted) / <alpha-value>)",
-          border: "var(--sonar-border)",
+        praksonar: {
+          teal: "#425c59",
+          gold: "#c99b33",
+          mint: "#e4eeed",
+          mintDark: "#e2eceb",
+          white: "#ffffff",
         }
       },
       fontFamily: {
-        outfit: ["var(--font-outfit)", "sans-serif"],
-        dmmono: ["var(--font-dm-mono)", "monospace"],
-        futura: ['Futura', 'Century Gothic', 'Trebuchet MS', 'sans-serif'],
+        sans: ['var(--font-league-spartan)', 'sans-serif'],
+        mono: ["var(--font-dm-mono)", "monospace"],
       },
       animation: {
         'sonar-ping': 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite',

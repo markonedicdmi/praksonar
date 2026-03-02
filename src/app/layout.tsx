@@ -1,15 +1,17 @@
 import type { Metadata } from 'next';
-import { Inter, Outfit, DM_Mono } from 'next/font/google';
+import { League_Spartan } from 'next/font/google';
 import './globals.css';
 import { createClient } from '@/lib/supabase/server';
-import NavAuth from '@/components/NavAuth';
 import Link from 'next/link';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import ThemeSwitcher from '@/components/ThemeSwitcher';
+import Sidebar from '@/components/Sidebar';
+import NavAuth from '@/components/NavAuth';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
-const dm_mono = DM_Mono({ weight: ['400', '500'], subsets: ['latin'], variable: '--font-dm-mono' });
+const leagueSpartan = League_Spartan({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['200', '300', '400', '500', '600', '700'],
+  variable: '--font-league-spartan',
+});
 
 export const metadata: Metadata = {
   title: 'Praksonar - Sve prakse. Na jednom mestu.',
@@ -24,55 +26,65 @@ export default async function RootLayout({
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
+  let userProfile = null;
+  if (session) {
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
+    userProfile = data;
+  }
+
   return (
     <html lang="sr" suppressHydrationWarning>
-      <body className={`${inter.variable} ${outfit.variable} ${dm_mono.variable} font-outfit antialiased`}>
+      <body className={`${leagueSpartan.variable} antialiased font-sans font-light`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-          <div className="min-h-screen bg-sonar-bg text-sonar-white flex flex-col transition-colors duration-300">
-            <nav className="border-b border-sonar-border bg-sonar-surface sticky top-0 z-50 transition-colors duration-300">
-              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="flex h-16 justify-between items-center">
-                  {/* Left: Logo */}
-                  <div className="flex-shrink-0 flex items-center">
-                    <Link href="/" className="text-xl sm:text-2xl font-futura font-bold text-sonar-white uppercase tracking-widest flex items-center gap-2">
-                      <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-sonar-signal animate-pulse"></div>
+          {session ? (
+            <div className="flex h-screen overflow-hidden bg-praksonar-mint">
+              {/* Left Sidebar */}
+              <div className="hidden md:flex flex-shrink-0">
+                <Sidebar user={session.user} profile={userProfile} />
+              </div>
+
+              {/* Mobile Header (Fallback when sidebar is hidden) */}
+              <div className="md:hidden flex h-16 bg-praksonar-teal text-white items-center justify-between px-4 sm:px-6 fixed top-0 w-full z-10">
+                <Link href="/" className="text-xl font-normal tracking-wide">
+                  Praksonar
+                </Link>
+                <NavAuth user={session.user} />
+              </div>
+
+              {/* Main Content Area */}
+              <main className="flex-1 overflow-y-auto mt-16 md:mt-0 p-4 md:p-8 bg-praksonar-mint">
+                {children}
+              </main>
+            </div>
+          ) : (
+            /* Logged Out Layout (Full width, simple header) */
+            <div className="min-h-screen bg-praksonar-mint flex flex-col">
+              <nav className="bg-transparent absolute top-0 w-full z-50">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                  <div className="flex h-20 items-center justify-between">
+                    <Link href="/" className="text-2xl font-normal text-praksonar-teal tracking-wide">
                       Praksonar
                     </Link>
-                  </div>
-
-                  {/* Center: Main Links */}
-                  <div className="hidden md:flex md:space-x-8 absolute left-1/2 transform -translate-x-1/2">
-                    <Link href="/internships" className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-sonar-muted hover:border-sonar-border hover:text-sonar-signal transition-colors">
-                      Prakse
-                    </Link>
-                    <Link href="/cv-writer" className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-sonar-muted hover:border-sonar-border hover:text-sonar-signal transition-colors">
-                      CV Pisac
-                    </Link>
-                  </div>
-
-                  {/* Right: Auth */}
-                  <div className="flex items-center gap-4">
-                    <ThemeSwitcher />
-                    <NavAuth user={session?.user ?? null} />
+                    <div className="flex gap-4">
+                      <Link href="/auth/login" className="text-sm font-medium text-praksonar-teal hover:text-praksonar-gold px-4 py-2 transition-colors">
+                        Prijavi se
+                      </Link>
+                      <Link href="/auth/register" className="text-sm font-medium bg-praksonar-gold text-white rounded-md px-4 py-2 hover:bg-praksonar-gold/90 transition-colors">
+                        Registracija
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Mobile Nav Links (Simple view) */}
-              <div className="md:hidden border-t border-sonar-border flex justify-center space-x-6 py-3 bg-sonar-surface">
-                <Link href="/internships" className="text-sm font-medium text-sonar-muted hover:text-sonar-signal transition-colors">
-                  Prakse
-                </Link>
-                <Link href="/cv-writer" className="text-sm font-medium text-sonar-muted hover:text-sonar-signal transition-colors">
-                  CV Pisac
-                </Link>
-              </div>
-            </nav>
-
-            <div className="flex-1 flex flex-col">
-              {children}
+              </nav>
+              <main className="flex-1 flex flex-col">
+                {children}
+              </main>
             </div>
-          </div>
+          )}
         </ThemeProvider>
       </body>
     </html>

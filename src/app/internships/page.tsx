@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { ProfileForGap, Internship } from '@/lib/skillGap';
 import InternshipCard from '@/components/InternshipCard';
+import InternshipDetail from '@/components/InternshipDetail';
 
 const FIELDS = [
     'Sve oblasti',
@@ -31,14 +32,14 @@ function InternshipsContent() {
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
+    const [showSaved, setShowSaved] = useState(false);
+    const [selectedInternship, setSelectedInternship] = useState<Internship | null>(null);
     const [page, setPage] = useState(0);
 
     // Filters from URL
     const fieldParam = searchParams.get('field') || 'Sve oblasti';
     const locationParam = searchParams.get('location') || 'All';
     const languageParam = searchParams.get('language') || 'All';
-    const viewMode = searchParams.get('view') || 'default';
-    const showSaved = searchParams.get('saved') === 'true';
 
     // Client-side search state
     const [clientSearch, setClientSearch] = useState('');
@@ -151,7 +152,8 @@ function InternshipsContent() {
         router.push(`?${params.toString()}`);
     };
 
-    const handleSave = async (id: string) => {
+    const handleSave = async (id: string, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
         // Requires login check
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
@@ -205,45 +207,19 @@ function InternshipsContent() {
         return titleMatch || companyMatch;
     });
 
-    // Masonry Layout Calculation for Compact Mode
-    const columnCount = 3; // Max columns for lg
-    const masonryColumns: Internship[][] = Array.from({ length: columnCount }, () => []);
-
-    if (viewMode === 'compact') {
-        displayedInternships.forEach((internship, index) => {
-            masonryColumns[index % columnCount].push(internship);
-        });
-    }
-
     return (
-        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div className="h-full flex flex-col">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Prakse</h1>
-                    <p className="mt-1 text-gray-600">Pronađite svoju idealnu priliku za razvoj.</p>
-                </div>
-            </div>
-
-            {/* View Mode & Saved Toggles */}
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex bg-gray-100 rounded-lg p-1">
-                    <button
-                        onClick={() => updateFilter('view', 'default')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'default' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
-                    >
-                        Default
-                    </button>
-                    <button
-                        onClick={() => updateFilter('view', 'compact')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'compact' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
-                    >
-                        Compact
-                    </button>
+                    <h1 className="text-3xl font-light text-praksonar-teal mb-1">Prakse</h1>
+                    <p className="text-praksonar-teal/70">
+                        {loading ? 'Učitavanje...' : `Pronađeno ${displayedInternships.length} praksi`}
+                    </p>
                 </div>
                 {isLoggedIn && (
                     <button
-                        onClick={() => updateFilter('saved', showSaved ? 'false' : 'true')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${showSaved ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                        onClick={() => setShowSaved(!showSaved)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${showSaved ? 'bg-praksonar-gold border-praksonar-gold text-white shadow-sm' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}
                     >
                         <svg className="w-5 h-5" fill={showSaved ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -254,131 +230,105 @@ function InternshipsContent() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-8 flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Pretraga (klijentska)</label>
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-wrap gap-4">
+                <div className="flex-1 min-w-[200px]">
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Pretraga</label>
                     <input
                         type="text"
-                        placeholder="Pretraži po naslovu ili kompaniji..."
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border"
+                        placeholder="Po poziciji ili kompaniji..."
+                        className="w-full rounded-md border-gray-200 shadow-sm focus:border-praksonar-teal focus:ring-praksonar-teal py-2 px-3 border text-sm"
                         value={clientSearch}
                         onChange={(e) => setClientSearch(e.target.value)}
                     />
                 </div>
-                <div className="w-full md:w-48">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Oblast</label>
+                <div className="w-full sm:w-auto min-w-[150px]">
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Oblast</label>
                     <select
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border bg-white"
+                        className="w-full rounded-md border-gray-200 shadow-sm focus:border-praksonar-teal focus:ring-praksonar-teal py-2 px-3 border bg-white text-sm"
                         value={fieldParam}
                         onChange={(e) => updateFilter('field', e.target.value)}
                     >
-                        {FIELDS.map((f) => (
-                            <option key={f} value={f}>{f}</option>
-                        ))}
+                        {FIELDS.map((f) => <option key={f} value={f}>{f}</option>)}
                     </select>
                 </div>
-                <div className="w-full md:w-48">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Lokacija</label>
+                <div className="w-full sm:w-auto min-w-[150px]">
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Lokacija</label>
                     <select
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border bg-white"
+                        className="w-full rounded-md border-gray-200 shadow-sm focus:border-praksonar-teal focus:ring-praksonar-teal py-2 px-3 border bg-white text-sm"
                         value={locationParam}
                         onChange={(e) => updateFilter('location', e.target.value)}
                     >
-                        {LOCATIONS.map((l) => (
-                            <option key={l} value={l}>{l}</option>
-                        ))}
+                        {LOCATIONS.map((l) => <option key={l} value={l}>{l}</option>)}
                     </select>
                 </div>
-                <div className="w-full md:w-48">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Jezik</label>
+                <div className="w-full sm:w-auto min-w-[150px]">
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Jezik</label>
                     <select
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border bg-white"
+                        className="w-full rounded-md border-gray-200 shadow-sm focus:border-praksonar-teal focus:ring-praksonar-teal py-2 px-3 border bg-white text-sm"
                         value={languageParam}
                         onChange={(e) => updateFilter('language', e.target.value)}
                     >
-                        {LANGUAGES.map((l) => (
-                            <option key={l} value={l}>{l}</option>
-                        ))}
+                        {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
                     </select>
                 </div>
             </div>
 
-            {/* Content */}
-            {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[...Array(6)].map((_, i) => (
-                        <div key={i} className="animate-pulse bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                            <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
-                            <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-                            <div className="h-4 bg-gray-200 rounded w-1/4 mb-6"></div>
-                            <div className="flex gap-2">
-                                <div className="h-6 bg-gray-200 rounded w-16"></div>
-                                <div className="h-6 bg-gray-200 rounded w-16"></div>
+            {/* Split Pane Content */}
+            <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
+                {/* Left Side: List */}
+                <div className="w-full lg:w-1/2 xl:w-7/12 flex flex-col overflow-y-auto pr-1 pb-10 space-y-4 custom-scrollbar">
+                    {loading ? (
+                        [...Array(5)].map((_, i) => (
+                            <div key={i} className="animate-pulse bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col gap-3">
+                                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                                <div className="flex gap-2"><div className="h-5 bg-gray-200 rounded w-16"></div></div>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            ) : displayedInternships.length === 0 ? (
-                <div className="text-center py-16 bg-white rounded-lg border border-gray-200 shadow-sm">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">Nema rezultata</h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                        Nismo našli nijednu praksu koja odgovara tvojim filterima. Pokušaj sa drugačijom pretragom!
-                    </p>
-                </div>
-            ) : (
-                <>
-                    {viewMode === 'compact' ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-                            {/* Render Masonry Columns */}
-                            {masonryColumns.map((column, colIdx) => (
-                                <div key={colIdx} className="flex flex-col gap-6">
-                                    {column.map((internship) => (
-                                        <InternshipCard
-                                            key={internship.id}
-                                            internship={internship}
-                                            userProfile={userProfile}
-                                            isLoggedIn={isLoggedIn}
-                                            isSaved={savedInternships.includes(internship.id)}
-                                            handleSave={handleSave}
-                                            viewMode={viewMode}
-                                        />
-                                    ))}
-                                </div>
-                            ))}
+                        ))
+                    ) : displayedInternships.length === 0 ? (
+                        <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-200">
+                            <h3 className="text-sm font-medium text-gray-900">Nema rezultata</h3>
+                            <p className="mt-1 text-sm text-gray-500">Pokušaj sa drugačijom pretragom.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <>
                             {displayedInternships.map((internship) => (
                                 <InternshipCard
                                     key={internship.id}
                                     internship={internship}
-                                    userProfile={userProfile}
-                                    isLoggedIn={isLoggedIn}
                                     isSaved={savedInternships.includes(internship.id)}
+                                    isSelected={selectedInternship?.id === internship.id}
+                                    onClick={() => setSelectedInternship(internship)}
                                     handleSave={handleSave}
-                                    viewMode={viewMode}
                                 />
                             ))}
-                        </div>
+                            {hasMore && !clientSearch.trim() && (
+                                <div className="pt-4 flex justify-center">
+                                    <button
+                                        onClick={handleLoadMore}
+                                        disabled={loadingMore}
+                                        className="py-2.5 px-6 border border-praksonar-teal text-praksonar-teal rounded-lg shadow-sm hover:bg-praksonar-teal hover:text-white transition-colors disabled:opacity-50"
+                                    >
+                                        {loadingMore ? 'Učitavanje...' : 'Učitaj još praksi'}
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     )}
+                </div>
 
-                    {hasMore && !clientSearch.trim() && (
-                        <div className="mt-8 flex justify-center">
-                            <button
-                                onClick={handleLoadMore}
-                                disabled={loadingMore}
-                                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {loadingMore ? 'Učitavanje...' : 'Učitaj još'}
-                            </button>
-                        </div>
-                    )}
-                </>
-            )}
-        </main>
+                {/* Right Side: Detail Panel */}
+                <div className="hidden lg:block lg:w-1/2 xl:w-5/12 sticky top-0 h-[calc(100vh-16rem)]">
+                    <InternshipDetail
+                        internship={selectedInternship}
+                        userProfile={userProfile}
+                        isLoggedIn={isLoggedIn}
+                        isSaved={selectedInternship ? savedInternships.includes(selectedInternship.id) : false}
+                        handleSave={handleSave}
+                    />
+                </div>
+            </div>
+        </div>
     );
 }
 

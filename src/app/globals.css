@@ -4,36 +4,20 @@
 
 @layer base {
   :root {
-    --background: #ffffff;
-    --foreground: #171717;
-    
-    /* Light/Pastel Theme (Default) */
-    --sonar-bg: 248 250 252;
-    --sonar-surface: 255 255 255;
-    --sonar-signal: 20 184 166; /* Teal 500 */
-    --sonar-white: 15 23 42; /* Slate 900 */
-    --sonar-muted: 100 116 139; /* Slate 500 */
-    --sonar-border: rgba(226, 232, 240, 1); /* Slate 200 */
+    --background: #e4eeed;
+    --foreground: #425c59;
   }
 
   .dark {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    
-    /* Dark Theme (Praksonar UI) */
-    --sonar-bg: 4 7 15;
-    --sonar-surface: 12 18 32;
-    --sonar-signal: 0 240 200;
-    --sonar-white: 240 244 248;
-    --sonar-muted: 96 112 128;
-    --sonar-border: rgba(0, 240, 200, 0.10);
+    /* Design focuses purely on light/mint aesthetics currently */
+    --background: #e4eeed;
+    --foreground: #425c59;
   }
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 @layer utilities {
