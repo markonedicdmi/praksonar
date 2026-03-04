@@ -4,14 +4,19 @@
 
 @layer base {
   :root {
-    --background: #e4eeed;
-    --foreground: #425c59;
-  }
-
-  .dark {
-    /* Design focuses purely on light/mint aesthetics currently */
-    --background: #e4eeed;
-    --foreground: #425c59;
+    --color-sidebar: #425c59;
+    --color-accent: #c99b33;
+    --color-bg: #e4eeed;
+    --color-bg-secondary: #e2eceb;
+    --color-error-bg: #fef2f2;
+    --color-error-text: #b91c1c;
+    --color-sidebar-muted: #cbd5e1;
+    --color-input: #ffffff;
+    --color-card: #ffffff;
+    --color-text: #1a1a1a;
+    --color-text-on-dark: #ffffff;
+    --color-text-muted: #6b7280;
+    --color-border: #e5e7eb;
   }
 }
 

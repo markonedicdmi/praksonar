@@ -12,13 +12,21 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        praksonar: {
-          teal: "#425c59",
-          gold: "#c99b33",
-          mint: "#e4eeed",
-          mintDark: "#e2eceb",
-          white: "#ffffff",
-        }
+        sidebar: "var(--color-sidebar)",
+        accent: "var(--color-accent)",
+        app: "var(--color-bg)",
+        "app-secondary": "var(--color-bg-secondary)",
+        card: "var(--color-card)",
+        "app-text": "var(--color-text)",
+        "text-on-dark": "var(--color-text-on-dark)",
+        muted: "var(--color-text-muted)",
+        border: "var(--color-border)",
+        "success-bg": "var(--color-success-bg)",
+        "success-text": "var(--color-success-text)",
+        "error-bg": "var(--color-error-bg)",
+        "error-text": "var(--color-error-text)",
+        "sidebar-muted": "var(--color-sidebar-muted)",
+        input: "var(--color-input)",
       },
       fontFamily: {
         sans: ['var(--font-league-spartan)', 'sans-serif'],

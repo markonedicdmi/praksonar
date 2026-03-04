@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inverted Radar Animation</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* You can change this background color; the logo transparency allows it to show through */
+            background-color: transparent;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="radar" width="600" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('radar');
+        const ctx = canvas.getContext('2d');
+
+        const width = canvas.width;
+        const height = canvas.height;
+        const cx = width / 2;
+        const cy = height / 2;
+
+        // Exact measurements mapped directly from the prompt
+        const centerDotRadius = 20;
+
+        const innerSolidWidth = 59;
+        const innerEmptyWidth = 20;
+
+        const middleSolidWidth = 40;
+        const outerEmptyWidth = 20;
+
+        const outerSolidWidth = 59;
+
+        const blipEmptyRadius = 30;
+        const blipRedRadius = 10;
+
+        const sweepLineWidth = 20; // Used the same thickness as the "empty space" width
+
+        const sweepLineInner = 10;  // Connect line to the middle dot
+        const sweepLineOuter = 240; // line connected with circle lenght: 240
+
+        // Radii calculation
+        // Inner ring is centered in its empty space
+        const ring1Center = centerDotRadius + innerSolidWidth + (innerEmptyWidth / 2);
+
+        // Outer ring is centered in its empty space
+        const ring2Center = centerDotRadius + innerSolidWidth + innerEmptyWidth + middleSolidWidth + (outerEmptyWidth / 2);
+
+        // Outer boundary of the entire solid part
+        const maxRadius = centerDotRadius + innerSolidWidth + innerEmptyWidth + middleSolidWidth + outerEmptyWidth + outerSolidWidth;
+
+        // Colors
+        const bgColor = '#6d866f'; // User specified hex
+        const redColor = '#ff0004'; // Matches the original red
+
+        class Blip {
+            constructor(angle, dist) {
+                this.angle = angle;
+                this.dist = dist;
+                this.hitRatio = 0;
+            }
+        }
+
+        // Maintaining same structural placement for the blips
+        const blips = [
+            new Blip(225 * Math.PI / 180, ring2Center), // Top left outer ring
+            new Blip(45 * Math.PI / 180, ring1Center),  // Bottom right inner ring
+            new Blip(110 * Math.PI / 180, ring2Center)  // Bottom left outer ring
+        ];
+
+        let sweepAngle = -45 * Math.PI / 180;
+        let currentSpeed = 0.03;
+
+        function draw() {
+            // Clear canvas entirely to ensure true background transparency
+            ctx.clearRect(0, 0, width, height);
+
+            ctx.save();
+
+            // 1. Draw solid continuous background shape
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = bgColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy, maxRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 2. Fading green trail overlay matching sweep rotation
+            const trailLength = Math.PI * 0.85;
+            const slices = 60;
+            for (let i = 0; i < slices; i++) {
+                const sliceAngle = trailLength / slices;
+                const start = sweepAngle - trailLength + (i * sliceAngle);
+                const end = start + sliceAngle + 0.015;
+
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, maxRadius, start, end);
+                ctx.closePath();
+
+                const opacity = (i / slices) * 0.35;
+                ctx.fillStyle = `rgba(168, 201, 156, ${opacity})`;
+                ctx.fill();
+            }
+
+            // 3. Cut out the transparent sections (inverted rendering)
+            // The 'destination-out' creates literal see-through holes in the canvas
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = 'rgba(0,0,0,1)';
+            ctx.strokeStyle = 'rgba(0,0,0,1)';
+
+            // Center transparent dot hole
+            ctx.beginPath();
+            ctx.arc(cx, cy, centerDotRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Inner empty ring gap
+            ctx.lineWidth = innerEmptyWidth;
+            ctx.beginPath();
+            ctx.arc(cx, cy, ring1Center, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Outer empty ring gap
+            ctx.lineWidth = outerEmptyWidth;
+            ctx.beginPath();
+            ctx.arc(cx, cy, ring2Center, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Sweep scanner line hole
+            ctx.lineWidth = sweepLineWidth;
+            ctx.lineCap = 'butt';
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(sweepAngle) * sweepLineInner, cy + Math.sin(sweepAngle) * sweepLineInner);
+            ctx.lineTo(cx + Math.cos(sweepAngle) * sweepLineOuter, cy + Math.sin(sweepAngle) * sweepLineOuter);
+            ctx.stroke();
+
+            // Blip emptiness circles (large transparent punch holes)
+            blips.forEach(blip => {
+                const bx = cx + Math.cos(blip.angle) * blip.dist;
+                const by = cy + Math.sin(blip.angle) * blip.dist;
+                ctx.beginPath();
+                ctx.arc(bx, by, blipEmptyRadius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 4. Draw opaque elements back over the canvas
+            ctx.globalCompositeOperation = 'source-over';
+
+            blips.forEach(blip => {
+                // Calculate angular distance backwards from the sweep line
+                let diff = (sweepAngle - blip.angle) % (Math.PI * 2);
+                if (diff < 0) diff += Math.PI * 2;
+
+                // Sweep pass logic
+                if (diff < currentSpeed * 1.5) {
+                    blip.hitRatio = 1.0;
+                }
+
+                // Hit decay
+                if (blip.hitRatio > 0) {
+                    blip.hitRatio -= 0.012;
+                    if (blip.hitRatio < 0) blip.hitRatio = 0;
+                }
+
+                const bx = cx + Math.cos(blip.angle) * blip.dist;
+                const by = cy + Math.sin(blip.angle) * blip.dist;
+
+                // Draw red dot core
+                ctx.beginPath();
+                ctx.arc(bx, by, blipRedRadius, 0, Math.PI * 2);
+                ctx.fillStyle = redColor;
+                ctx.fill();
+
+                // Shockwave pulse within the transparent empty radius
+                if (blip.hitRatio > 0) {
+                    // Expanding ring outwards towards emptiness boundary
+                    ctx.beginPath();
+                    const currentPulse = blipRedRadius + ((blipEmptyRadius - blipRedRadius) * (1 - blip.hitRatio));
+                    ctx.arc(bx, by, currentPulse, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 0, 4, ${blip.hitRatio * 0.5})`;
+                    ctx.fill();
+
+                    // Immediate thick bright glow
+                    ctx.beginPath();
+                    ctx.arc(bx, by, blipRedRadius + 8, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 100, 100, ${blip.hitRatio * 0.7})`;
+                    ctx.fill();
+                }
+            });
+
+            ctx.restore();
+
+            // Continual Clockwise Rotation
+            // Measure angle relative to top (12 o'clock = 0)
+            let relativeAngle = (sweepAngle + Math.PI / 2) % (Math.PI * 2);
+            if (relativeAngle < 0) relativeAngle += Math.PI * 2;
+
+            if (relativeAngle > Math.PI) {
+                currentSpeed = 0.05; // Speeds up at the last 50%
+            } else {
+                currentSpeed = 0.02; // Slower at the first 50%
+            }
+
+            sweepAngle += currentSpeed;
+            if (sweepAngle > Math.PI * 2) sweepAngle -= Math.PI * 2;
+
+            requestAnimationFrame(draw);
+        }
+
+        // Pre-draw setup
+        requestAnimationFrame(draw);
+    </script>
+</body>
+
+</html>
