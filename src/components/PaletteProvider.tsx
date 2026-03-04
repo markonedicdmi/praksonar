@@ -80,7 +80,7 @@ export function PaletteProvider({ children }: { children: React.ReactNode }) {
         } else {
             root.classList.remove('dark');
         }
-    }, [activePaletteName, mounted]);
+    }, [activePaletteName, mounted, pathname]);
 
     const setPalette = async (name: string) => {
         if (!PALETTES[name]) return;

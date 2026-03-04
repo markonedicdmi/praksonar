@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { League_Spartan } from 'next/font/google';
 import './globals.css';
 import { createClient } from '@/lib/supabase/server';
-import Link from 'next/link';
 import { PaletteProvider } from '@/components/PaletteProvider';
 import ClientShell from '@/components/ClientShell';
 

@@ -8,7 +8,7 @@ import { User } from '@supabase/supabase-js';
 
 interface ClientShellProps {
     user: User | null;
-    profile: any;
+    profile: Record<string, unknown> | null;
     children: React.ReactNode;
 }
 
