@@ -35,6 +35,8 @@ function InternshipsContent() {
     const [showSaved, setShowSaved] = useState(false);
     const [selectedInternship, setSelectedInternship] = useState<Internship | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [isFullScreen, setIsFullScreen] = useState(false);
+    const [startY, setStartY] = useState(0);
     const [page, setPage] = useState(0);
     const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
 
@@ -351,6 +353,7 @@ function InternshipsContent() {
                                     onClick={() => {
                                         setSelectedInternship(internship);
                                         setIsDetailOpen(true);
+                                        setIsFullScreen(false);
                                     }}
                                     handleSave={handleSave}
                                 />
@@ -388,11 +391,28 @@ function InternshipsContent() {
             >
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsDetailOpen(false)} />
                 <div
-                    className={`absolute bottom-0 left-0 right-0 bg-app rounded-t-3xl shadow-2xl transition-transform duration-500 transform ease-out ${isDetailOpen ? 'translate-y-0' : 'translate-y-full'}`}
-                    style={{ height: '85vh' }}
+                    className={`absolute bottom-0 left-0 right-0 bg-app rounded-t-3xl shadow-2xl transition-all duration-300 transform ease-out flex flex-col ${isDetailOpen ? 'translate-y-0' : 'translate-y-full'}`}
+                    style={{ height: isFullScreen ? '96vh' : '75vh' }}
                 >
-                    <div className="w-12 h-1.5 bg-border/20 rounded-full mx-auto my-3" />
-                    <div className="h-full overflow-y-auto pb-20 px-4">
+                    <button
+                        className="w-full pt-4 pb-3 flex justify-center items-center touch-none focus:outline-none shrink-0"
+                        onTouchStart={(e) => setStartY(e.touches[0].clientY)}
+                        onTouchEnd={(e) => {
+                            const endY = e.changedTouches[0].clientY;
+                            const diff = endY - startY;
+                            if (diff < -40 && !isFullScreen) {
+                                setIsFullScreen(true);
+                            } else if (diff > 40) {
+                                if (isFullScreen) setIsFullScreen(false);
+                                else setIsDetailOpen(false);
+                            }
+                        }}
+                        onClick={() => setIsFullScreen(!isFullScreen)}
+                        aria-label="Promeni veličinu prozora"
+                    >
+                        <div className="w-12 h-1.5 bg-border/60 hover:bg-border/80 transition-colors rounded-full" />
+                    </button>
+                    <div className="flex-1 overflow-y-auto pb-8 px-4">
                         <InternshipDetail
                             internship={selectedInternship}
                             userProfile={userProfile}
