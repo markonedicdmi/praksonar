@@ -4,10 +4,29 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import SonarLoader from '@/components/SonarLoader';
+
+const normalizeEmail = (emailStr: string) => {
+    const lowerEmail = emailStr.toLowerCase().trim();
+    if (lowerEmail.endsWith('@gmail.com') || lowerEmail.endsWith('@googlemail.com')) {
+        const parts = lowerEmail.split('@');
+        const localPart = parts[0].replace(/\./g, '');
+        return `${localPart}@gmail.com`;
+    }
+    return lowerEmail;
+};
+
+const translateAuthError = (message: string) => {
+    if (message.includes('User already registered')) return 'Korisnik već postoji, pokušajte da se prijavite.';
+    if (message.includes('Password should be at least')) return 'Lozinka mora imati barem 8 karaktera.';
+    return message;
+};
 
 export default function RegisterPage() {
     const router = useRouter();
     const supabase = createClient();
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -15,8 +34,8 @@ export default function RegisterPage() {
 
     useEffect(() => {
         const checkSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
                 router.push('/internships');
             }
         };
@@ -28,19 +47,28 @@ export default function RegisterPage() {
         setLoading(true);
         setError(null);
 
-        const { error } = await supabase.auth.signUp({
-            email,
+        const { data, error } = await supabase.auth.signUp({
+            email: normalizeEmail(email),
             password,
             options: {
+                data: {
+                    first_name: firstName,
+                    last_name: lastName,
+                    full_name: `${firstName} ${lastName}`.trim(),
+                },
                 emailRedirectTo: `${location.origin}/auth/callback?next=/onboarding`,
             },
         });
 
         if (error) {
-            setError(error.message);
+            setError(translateAuthError(error.message));
             setLoading(false);
         } else {
-            router.push('/auth/confirm-email');
+            if (data?.session) {
+                router.push('/onboarding');
+            } else {
+                router.push('/auth/confirm-email');
+            }
             router.refresh();
         }
     };
@@ -49,14 +77,8 @@ export default function RegisterPage() {
         return (
             <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-app-secondary px-4">
                 <div className="w-full max-w-md flex flex-col items-center justify-center text-center space-y-6">
-                    <div id="loading-animation" className="animate-pulse">
-                        <span
-                            className="h-24 w-24 bg-accent inline-block"
-                            style={{
-                                WebkitMask: 'url("/Praksonar logo fat.png") no-repeat center/contain',
-                                mask: 'url("/Praksonar logo fat.png") no-repeat center/contain'
-                            }}
-                        />
+                    <div id="loading-animation" className="flex items-center justify-center p-8 mt-6">
+                        <SonarLoader size={120} />
                     </div>
                     <h2 className="text-xl font-medium text-app-text animate-pulse">Kreiranje naloga...</h2>
                 </div>
@@ -93,7 +115,36 @@ export default function RegisterPage() {
                             {error}
                         </div>
                     )}
-                    <div className="-space-y-px rounded-md shadow-sm">
+                    <div className="flex flex-col gap-[2px]">
+                        <div className="grid grid-cols-2 gap-[2px]">
+                            <div>
+                                <label htmlFor="first-name" className="sr-only">Ime</label>
+                                <input
+                                    id="first-name"
+                                    name="firstName"
+                                    type="text"
+                                    required
+                                    className="relative block w-full rounded-tl-md border-0 py-2.5 text-app-text ring-1 ring-inset ring-border placeholder:text-muted focus:z-10 focus:ring-2 focus:ring-inset focus:ring-accent sm:text-sm sm:leading-6 px-3 bg-input"
+                                    placeholder="Ime"
+                                    value={firstName}
+                                    onChange={(e) => setFirstName(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="last-name" className="sr-only">Prezime</label>
+                                <input
+                                    id="last-name"
+                                    name="lastName"
+                                    type="text"
+                                    required
+                                    className="relative block w-full rounded-tr-md border-0 py-2.5 text-app-text ring-1 ring-inset ring-border placeholder:text-muted focus:z-10 focus:ring-2 focus:ring-inset focus:ring-accent sm:text-sm sm:leading-6 px-3 bg-input"
+                                    placeholder="Prezime"
+                                    value={lastName}
+                                    onChange={(e) => setLastName(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
                         <div>
                             <label htmlFor="email-address" className="sr-only">
                                 Email adresa
@@ -104,7 +155,7 @@ export default function RegisterPage() {
                                 type="email"
                                 autoComplete="email"
                                 required
-                                className="relative block w-full rounded-t-md border-0 py-2.5 text-app-text ring-1 ring-inset ring-border placeholder:text-muted focus:z-10 focus:ring-2 focus:ring-inset focus:ring-accent sm:text-sm sm:leading-6 px-3 bg-input"
+                                className="relative block w-full border-0 py-2.5 text-app-text ring-1 ring-inset ring-border placeholder:text-muted focus:z-10 focus:ring-2 focus:ring-inset focus:ring-accent sm:text-sm sm:leading-6 px-3 bg-input"
                                 placeholder="Email adresa"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -120,8 +171,9 @@ export default function RegisterPage() {
                                 type="password"
                                 autoComplete="new-password"
                                 required
+                                minLength={8}
                                 className="relative block w-full rounded-b-md border-0 py-2.5 text-app-text ring-1 ring-inset ring-border placeholder:text-muted focus:z-10 focus:ring-2 focus:ring-inset focus:ring-accent sm:text-sm sm:leading-6 px-3 bg-input"
-                                placeholder="Lozinka (min 6 karaktera)"
+                                placeholder="Lozinka (min 8 karaktera)"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />

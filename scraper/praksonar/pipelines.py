@@ -3,6 +3,7 @@ import logging
 from itemadapter import ItemAdapter
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from datetime import datetime, timezone
 
 # Explicitly load .env from the scraper directory, regardless of where scrapy is run from
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +29,20 @@ class SupabasePipeline:
             spider.logger.error(f"Failed to connect to Supabase: {e}")
 
     def close_spider(self, spider):
-        spider.logger.info(f"Spider closed. Inserted {self.new_internships_count} new internships.")
+        spider.logger.info(f"Spider closed. Upserted {self.new_internships_count} internships.")
+
+        # Update the scrape_runs row if a run_id was passed via spider args
+        run_id = getattr(spider, 'run_id', None)
+        if run_id and self.supabase:
+            try:
+                self.supabase.table('scrape_runs').update({
+                    'status': 'completed',
+                    'new_count': self.new_internships_count,
+                    'finished_at': datetime.now(timezone.utc).isoformat(),
+                }).eq('id', run_id).execute()
+                spider.logger.info(f"Updated scrape_run {run_id}: completed with {self.new_internships_count} items.")
+            except Exception as e:
+                spider.logger.error(f"Failed to update scrape_run {run_id}: {e}")
 
     def process_item(self, item, spider):
         if not self.supabase:
@@ -42,7 +56,6 @@ class SupabasePipeline:
             return item
 
         try:
-            from datetime import datetime, timezone
             data_dict = adapter.asdict()
             data_dict['updated_at'] = datetime.now(timezone.utc).isoformat()
 

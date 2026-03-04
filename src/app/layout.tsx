@@ -12,8 +12,43 @@ const leagueSpartan = League_Spartan({
 });
 
 export const metadata: Metadata = {
-  title: 'Praksonar - Sve prakse. Na jednom mestu.',
-  description: 'Praksonar automatski prikuplja prakse za studente iz Srbije — svaki dan.',
+  metadataBase: new URL('https://praksonar.com'),
+  title: {
+    template: '%s | Praksonar',
+    default: 'Praksonar — Sve prakse za studente Srbije',
+  },
+  description: 'Praksonar automatski prikuplja prakse za studente iz Srbije svaki dan. Pronađi svoju idealnu praksu i saznaj šta ti nedostaje.',
+  keywords: 'prakse srbija, studentske prakse, praksa beograd, praksa novi sad, internship srbija',
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'Praksonar — Sve prakse za studente Srbije',
+    description: 'Praksonar automatski prikuplja prakse za studente iz Srbije svaki dan. Pronađi svoju idealnu praksu i saznaj šta ti nedostaje.',
+    url: 'https://praksonar.com',
+    siteName: 'Praksonar',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Praksonar — Sve prakse za studente Srbije',
+      },
+    ],
+    locale: 'sr_RS',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Praksonar — Sve prakse za studente Srbije',
+    description: 'Praksonar automatski prikuplja prakse za studente iz Srbije svaki dan. Pronađi svoju idealnu praksu i saznaj šta ti nedostaje.',
+    images: ['/og-image.png'],
+  },
 };
 
 export default async function RootLayout({

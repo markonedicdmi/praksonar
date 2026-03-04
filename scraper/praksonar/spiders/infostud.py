@@ -7,6 +7,9 @@ class InfostudSpider(scrapy.Spider):
     allowed_domains = ["startuj.infostud.com"]
     start_urls = ["https://startuj.infostud.com/prakse"]
 
+    # Optional: passed via -a run_id=<uuid> so pipeline can update scrape_runs
+    run_id = None
+
     def parse(self, response):
         # Loop through listing elements on the search page
         listings = response.css('a.__job_card')

@@ -98,10 +98,13 @@ export default async function Home() {
 
       {/* FOOTER */}
       <footer className="relative z-10 border-t border-border/60 bg-card/50 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted font-medium tracking-wide uppercase">
-          <div className="flex items-center gap-6">
-            <Link href="/internships" className="hover:text-accent transition-colors">/internships</Link>
-            <Link href="/auth/register" className="hover:text-accent transition-colors">/auth/register</Link>
+        <div className="max-w-7xl mx-auto px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted font-medium tracking-wide">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <Link href="/internships" className="hover:text-accent transition-colors uppercase tracking-wider">Prakse</Link>
+            <Link href="/auth/register" className="hover:text-accent transition-colors uppercase tracking-wider">Registruj se</Link>
+            <Link href="/o-meni" className="hover:text-accent transition-colors uppercase tracking-wider">O meni</Link>
+            <a href="mailto:kontakt@praksonar.com" className="hover:text-accent transition-colors uppercase tracking-wider">Kontakt</a>
+            <Link href="/politika-privatnosti" className="hover:text-accent transition-colors uppercase tracking-wider">Politika privatnosti</Link>
           </div>
           <div>
             Napravio student iz Srbije

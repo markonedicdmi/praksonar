@@ -14,6 +14,7 @@ const LogoutIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentCol
 const LoginIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>;
 const RegisterIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>;
 const CloseIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
+const InfoIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 interface SidebarProps {
     user?: User | null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,7 +46,8 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
     const loggedInNavItems: NavItem[] = [
         { name: 'Prakse', href: '/internships', icon: <BriefcaseIcon /> },
         { name: 'Moj Profil', href: '/profile', icon: <UserIcon /> },
-        { name: 'CV Pisac', href: '/cv-writer', icon: <DocumentIcon />, disabled: true, badge: 'uskoro' },
+        { name: 'CV Pisac', href: '/cv-writer', icon: <DocumentIcon />, badge: 'uskoro' },
+        { name: 'O meni', href: '/o-meni', icon: <InfoIcon /> },
         { name: 'Podešavanja', href: '/settings', icon: <SettingsIcon /> },
     ];
 
@@ -53,12 +55,13 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
         { name: 'Prakse', href: '/internships', icon: <BriefcaseIcon /> },
         { name: 'Prijavi se', href: '/auth/login', icon: <LoginIcon /> },
         { name: 'Registruj se', href: '/auth/register', icon: <RegisterIcon />, highlight: true },
-        { name: 'CV Pisac', href: '/cv-writer', icon: <DocumentIcon />, disabled: true, badge: 'uskoro' },
+        { name: 'CV Pisac', href: '/cv-writer', icon: <DocumentIcon />, badge: 'uskoro' },
+        { name: 'O meni', href: '/o-meni', icon: <InfoIcon /> },
         { name: 'Podešavanja', href: '/settings', icon: <SettingsIcon /> }
     ];
 
     const currentNavItems = user ? loggedInNavItems : guestNavItems;
-    const userName = profile?.full_name || user?.email?.split('@')[0] || 'Gost';
+    const userName = profile?.full_name || user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Gost');
     const userEmail = user?.email || 'Niste prijavljeni';
 
     return (
@@ -98,15 +101,15 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
                         </div>
                     </Link>
                 ) : (
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-sidebar-muted/20 text-sidebar-muted flex items-center justify-center font-medium text-lg overflow-hidden flex-shrink-0">
+                    <Link href="/auth/register" onClick={onClose} className="flex items-center gap-4 group cursor-pointer hover:bg-card/5 p-2 -m-2 rounded-lg transition-colors">
+                        <div className="w-12 h-12 rounded-full bg-sidebar-muted/20 text-sidebar-muted flex items-center justify-center font-medium text-lg overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform">
                             ?
                         </div>
                         <div className="flex flex-col overflow-hidden">
-                            <span className="text-sm font-medium truncate">Gost</span>
+                            <span className="text-sm font-medium truncate group-hover:text-accent transition-colors">Gost</span>
                             <span className="text-xs text-sidebar-muted truncate">Prijavite se za pun pristup</span>
                         </div>
-                    </div>
+                    </Link>
                 )}
             </div>
 
@@ -137,15 +140,22 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
                             key={item.href}
                             href={item.href}
                             onClick={onClose}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
+                            className={`flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all ${isActive
                                 ? 'bg-accent text-text-on-dark font-medium shadow-md'
                                 : item.highlight
                                     ? 'border border-[#c99b33] text-[#c99b33] hover:bg-[#c99b33]/10'
                                     : 'text-sidebar-muted hover:bg-card/10 hover:text-text-on-dark'
                                 }`}
                         >
-                            {item.icon}
-                            {item.name}
+                            <span className="flex items-center gap-3">
+                                {item.icon}
+                                {item.name}
+                            </span>
+                            {item.badge && (
+                                <span className="text-[10px] uppercase tracking-tighter bg-sidebar-muted/20 px-1.5 py-0.5 rounded leading-none">
+                                    {item.badge}
+                                </span>
+                            )}
                         </Link>
                     )
                 })}

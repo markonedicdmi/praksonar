@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
+const translateAuthError = (message: string) => {
+    if (message.includes('Invalid login credentials')) return 'Pogrešna email adresa ili lozinka.';
+    if (message.includes('Email not confirmed')) return 'Email adresa nije potvrđena.';
+    return message;
+};
+
 export default function LoginPage() {
     const router = useRouter();
     const supabase = createClient();
@@ -15,8 +21,8 @@ export default function LoginPage() {
 
     useEffect(() => {
         const checkSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
                 router.push('/internships');
             }
         };
@@ -34,7 +40,7 @@ export default function LoginPage() {
         });
 
         if (error) {
-            setError(error.message);
+            setError(translateAuthError(error.message));
             setLoading(false);
         } else {
             router.push('/internships');
@@ -71,7 +77,7 @@ export default function LoginPage() {
                             {error}
                         </div>
                     )}
-                    <div className="-space-y-px rounded-md shadow-sm">
+                    <div className="flex flex-col gap-[2px] shadow-sm">
                         <div>
                             <label htmlFor="email-address" className="sr-only">
                                 Email adresa
@@ -98,8 +104,9 @@ export default function LoginPage() {
                                 type="password"
                                 autoComplete="current-password"
                                 required
+                                minLength={8}
                                 className="relative block w-full rounded-b-md border-0 py-2.5 text-app-text ring-1 ring-inset ring-border placeholder:text-muted focus:z-10 focus:ring-2 focus:ring-inset focus:ring-accent sm:text-sm sm:leading-6 px-3 bg-input"
-                                placeholder="Lozinka"
+                                placeholder="Lozinka (min 8 karaktera)"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />

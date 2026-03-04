@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   study_level text CHECK (study_level IN ('bachelor', 'master')),
   skills text[],
   languages jsonb,
+  avatar_url text,
+  cv_url text,
   subscription_tier text DEFAULT 'free' CHECK (subscription_tier IN ('free', 'premium')),
   email_notifications boolean DEFAULT true,
   created_at timestamptz DEFAULT now()

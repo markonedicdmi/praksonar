@@ -78,6 +78,12 @@ export default function InternshipCard({ internship, isSaved, isSelected, onClic
                     </button>
 
                     <div className="text-right w-full sm:w-auto">
+                        {/* Publication date — shown only when created_at is available */}
+                        {internship.created_at && (
+                            <div className="text-xs text-muted/70 mb-1">
+                                Objavljeno: {new Date(internship.created_at).toLocaleDateString('sr-RS')}
+                            </div>
+                        )}
                         <div className="text-xs text-muted mb-2">
                             Rok: {internship.deadline ? new Date(internship.deadline).toLocaleDateString('sr-RS') : 'Što pre'}
                         </div>
