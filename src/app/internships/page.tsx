@@ -158,8 +158,9 @@ function InternshipsContent() {
             }
 
             // --- Advanced: source filter ---
-            if (selectedSources.length > 0) {
-                query = query.in('source_name', selectedSources);
+            const sourcesList = sourcesParam ? sourcesParam.split(',') : [];
+            if (sourcesList.length > 0) {
+                query = query.in('source_name', sourcesList);
             }
 
             const { data, error } = await query;

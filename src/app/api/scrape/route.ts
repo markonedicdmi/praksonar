@@ -126,9 +126,9 @@ export async function POST() {
         });
 
         return NextResponse.json({ runId }, { status: 202 });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Unexpected error in POST /api/scrape:', err);
-        if (err.message && err.message.startsWith('Server misconfiguration')) {
+        if (err instanceof Error && err.message.startsWith('Server misconfiguration')) {
             return NextResponse.json({ error: err.message }, { status: 500 });
         }
         return NextResponse.json(
@@ -162,9 +162,9 @@ export async function GET(request: NextRequest) {
         }
 
         return NextResponse.json(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Error in GET /api/scrape:', err);
-        if (err.message && err.message.startsWith('Server misconfiguration')) {
+        if (err instanceof Error && err.message.startsWith('Server misconfiguration')) {
             return NextResponse.json({ error: err.message }, { status: 500 });
         }
         return NextResponse.json({ error: 'Neočekivana greška.' }, { status: 500 });

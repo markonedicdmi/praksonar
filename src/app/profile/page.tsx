@@ -271,6 +271,7 @@ export default function ProfilePage() {
                         {/* Avatar Display */}
                         <div className="relative flex-shrink-0">
                             {avatarUrl ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
                                 <img
                                     src={avatarUrl}
                                     alt="Avatar"

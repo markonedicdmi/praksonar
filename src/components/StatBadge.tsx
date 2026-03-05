@@ -18,7 +18,7 @@ export default function StatBadge() {
                 if (!error && count !== null) {
                     setCount(count);
                 }
-            } catch (err) {
+            } catch {
                 // Ignore error
             } finally {
                 setLoading(false);
