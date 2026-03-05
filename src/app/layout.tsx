@@ -118,6 +118,16 @@ export default async function RootLayout({
         {process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
         )}
+        {/* Google tag (gtag.js) */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-C2MVW2QV3W"></script>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-C2MVW2QV3W');
+          `
+        }} />
         {/* 100% privacy-first analytics */}
         <script data-collect-dnt="true" async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
       </body>
