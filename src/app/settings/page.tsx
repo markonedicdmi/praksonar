@@ -100,17 +100,17 @@ export default function SettingsPage() {
     useEffect(() => {
         async function load() {
             setLoading(true);
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
                 router.push('/auth/login');
                 return;
             }
-            setUserId(session.user.id);
+            setUserId(user.id);
 
             const { data } = await supabase
                 .from('user_profiles')
                 .select('excluded_keywords, email_notifications, show_profile_match')
-                .eq('id', session.user.id)
+                .eq('id', user.id)
                 .single();
 
             if (data) {
@@ -234,15 +234,28 @@ export default function SettingsPage() {
         if (deleteConfirm !== 'OBRISI') return;
         setDeleting(true);
 
-        // Call a server-side route or use admin — for now, sign out and show message
-        // Supabase client-side cannot delete its own user; this requires a server route or admin SDK.
-        // We'll call a simple API route.
-        const res = await fetch('/api/account/delete', { method: 'DELETE' });
-        if (res.ok) {
-            await supabase.auth.signOut();
-            router.push('/auth/login');
-        } else {
-            setPageMessage({ type: 'error', text: 'Greška pri brisanju naloga. Kontaktirajte podršku.' });
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                // Cascade delete related rows
+                await supabase.from('saved_internships').delete().eq('user_id', user.id);
+                await supabase.from('cv_generations').delete().eq('user_id', user.id);
+                await supabase.from('user_profiles').delete().eq('id', user.id);
+            }
+
+            // Call server-side route for auth.admin.deleteUser
+            const res = await fetch('/api/account/delete', { method: 'DELETE' });
+            if (res.ok) {
+                await supabase.auth.signOut();
+                router.push('/');
+            } else {
+                setPageMessage({ type: 'error', text: 'Greška pri brisanju naloga. Kontaktirajte podršku.' });
+                setShowDeleteModal(false);
+                setDeleting(false);
+            }
+        } catch (error) {
+            console.error('Error deleting account:', error);
+            setPageMessage({ type: 'error', text: 'Došlo je do neočekivane greške pri brisanju.' });
             setShowDeleteModal(false);
             setDeleting(false);
         }

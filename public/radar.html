@@ -21,6 +21,8 @@
 
         canvas {
             display: block;
+            width: 600px;
+            height: 600px;
             max-width: 100%;
             max-height: 100vh;
         }
@@ -28,13 +30,15 @@
 </head>
 
 <body>
-    <canvas id="radar" width="600" height="600"></canvas>
+    <canvas id="radar" width="1200" height="1200"></canvas>
     <script>
         const canvas = document.getElementById('radar');
         const ctx = canvas.getContext('2d');
+        // Scale everything by 2x for high DPI
+        ctx.scale(2, 2);
 
-        const width = canvas.width;
-        const height = canvas.height;
+        const width = canvas.width / 2;
+        const height = canvas.height / 2;
         const cx = width / 2;
         const cy = height / 2;
 

@@ -67,22 +67,22 @@ export default async function InternshipPage({ params }: Props) {
     }
 
     // Fetch session & user profile & saved status
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
     let userProfile = null;
     let isSaved = false;
 
-    if (session) {
+    if (user) {
         const { data: profile } = await supabase
             .from('user_profiles')
             .select('*')
-            .eq('id', session.user.id)
+            .eq('id', user.id)
             .single();
         userProfile = profile;
 
         const { data: savedData } = await supabase
             .from('saved_internships')
             .select('id')
-            .match({ internship_id: id, user_id: session.user.id })
+            .match({ internship_id: id, user_id: user.id })
             .single();
 
         if (savedData) {
@@ -135,7 +135,7 @@ export default async function InternshipPage({ params }: Props) {
                 <ClientWrapper
                     internship={internship}
                     userProfile={userProfile}
-                    isLoggedIn={!!session}
+                    isLoggedIn={!!user}
                     initialIsSaved={isSaved}
                 />
             </div>

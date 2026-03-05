@@ -217,13 +217,13 @@ function InternshipsContent() {
     // Fetch user profile + saved internships
     useEffect(() => {
         const fetchUser = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
                 setIsLoggedIn(true);
                 const { data } = await supabase
                     .from('user_profiles')
                     .select('skills, languages')
-                    .eq('id', session.user.id)
+                    .eq('id', user.id)
                     .single();
                 if (data) {
                     setUserProfile(data as ProfileForGap);
@@ -232,7 +232,7 @@ function InternshipsContent() {
                 const { data: savedData } = await supabase
                     .from('saved_internships')
                     .select('internship_id')
-                    .eq('user_id', session.user.id);
+                    .eq('user_id', user.id);
                 if (savedData) {
                     setSavedInternships(savedData.map((d: { internship_id: string }) => d.internship_id));
                 }
@@ -315,8 +315,8 @@ function InternshipsContent() {
 
     const handleSave = async (id: string, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
             setPageMessage({ type: 'error', text: 'Morate biti ulogovani da biste sačuvali/uklonili praksu.' });
             return;
         }
@@ -327,7 +327,7 @@ function InternshipsContent() {
             const { error } = await supabase
                 .from('saved_internships')
                 .delete()
-                .match({ internship_id: id, user_id: session.user.id });
+                .match({ internship_id: id, user_id: user.id });
 
             if (error) {
                 setPageMessage({ type: 'error', text: 'Došlo je do greške prilikom uklanjanja.' });
@@ -338,7 +338,7 @@ function InternshipsContent() {
         } else {
             const { error } = await supabase
                 .from('saved_internships')
-                .insert({ internship_id: id, user_id: session.user.id });
+                .insert({ internship_id: id, user_id: user.id });
 
             if (error) {
                 if (error.code === '23505') {
@@ -766,6 +766,8 @@ function InternshipsContent() {
         </div>
     );
 }
+
+
 
 export default function InternshipsPage() {
     return (

@@ -5,12 +5,17 @@ import path from 'path';
 
 // Helper to lazily create the admin client so the module doesn't crash on boot if env vars are missing
 function getSupabaseAdmin() {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        throw new Error('Supabase admin env vars are not defined (.env.local missing)');
+    const missing: string[] = [];
+    if (!process.env.SUPABASE_URL) missing.push('SUPABASE_URL');
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (missing.length > 0) {
+        const missingVars = missing.join(' and ');
+        throw new Error(`Server misconfiguration: ${missingVars} is not set. Add it to .env.local and to your production environment.`);
     }
     return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_ROLE_KEY
+        process.env.SUPABASE_URL as string,
+        process.env.SUPABASE_SERVICE_ROLE_KEY as string
     );
 }
 
@@ -121,8 +126,11 @@ export async function POST() {
         });
 
         return NextResponse.json({ runId }, { status: 202 });
-    } catch (err) {
+    } catch (err: any) {
         console.error('Unexpected error in POST /api/scrape:', err);
+        if (err.message && err.message.startsWith('Server misconfiguration')) {
+            return NextResponse.json({ error: err.message }, { status: 500 });
+        }
         return NextResponse.json(
             { error: 'Neočekivana greška.' },
             { status: 500 }
@@ -154,8 +162,11 @@ export async function GET(request: NextRequest) {
         }
 
         return NextResponse.json(data);
-    } catch (err) {
+    } catch (err: any) {
         console.error('Error in GET /api/scrape:', err);
+        if (err.message && err.message.startsWith('Server misconfiguration')) {
+            return NextResponse.json({ error: err.message }, { status: 500 });
+        }
         return NextResponse.json({ error: 'Neočekivana greška.' }, { status: 500 });
     }
 }

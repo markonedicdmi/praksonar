@@ -22,9 +22,9 @@ export default function CvWriterPage() {
     // Pre-fill email if user is logged in
     useEffect(() => {
         async function prefill() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user?.email) {
-                setEmail(session.user.email);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.email) {
+                setEmail(user.email);
             }
         }
         prefill();

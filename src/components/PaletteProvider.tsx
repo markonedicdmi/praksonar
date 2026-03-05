@@ -34,9 +34,9 @@ export function PaletteProvider({ children }: { children: React.ReactNode }) {
 
         // Try to fetch from DB and override if exists
         const loadFromDb = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                const { data, error } = await supabase.from('user_profiles').select('theme_preference').eq('id', session.user.id).single();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data, error } = await supabase.from('user_profiles').select('theme_preference').eq('id', user.id).single();
                 if (!error && data && data.theme_preference && PALETTES[data.theme_preference]) {
                     setActivePaletteName(data.theme_preference);
                     localStorage.setItem('praksonar_theme_preference', data.theme_preference);
@@ -87,9 +87,9 @@ export function PaletteProvider({ children }: { children: React.ReactNode }) {
         setActivePaletteName(name);
         localStorage.setItem('praksonar_theme_preference', name);
 
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            await supabase.from('user_profiles').update({ theme_preference: name }).eq('id', session.user.id);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            await supabase.from('user_profiles').update({ theme_preference: name }).eq('id', user.id);
         }
     };
 

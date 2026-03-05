@@ -43,17 +43,17 @@ export default function ProfilePage() {
     useEffect(() => {
         async function loadProfile() {
             setLoading(true);
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
                 router.push('/auth/login');
                 return;
             }
-            setUserId(session.user.id);
+            setUserId(user.id);
 
             const { data } = await supabase
                 .from('user_profiles')
                 .select('*')
-                .eq('id', session.user.id)
+                .eq('id', user.id)
                 .single();
 
             if (data) {
@@ -73,8 +73,8 @@ export default function ProfilePage() {
 
     const handleSave = async (section: 'basic' | 'skills' | 'languages') => {
         setSaving(true);
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
         let updates = {};
         if (section === 'basic') {
@@ -88,7 +88,7 @@ export default function ProfilePage() {
         const { error } = await supabase
             .from('user_profiles')
             .update(updates)
-            .eq('id', session.user.id);
+            .eq('id', user.id);
 
         if (!error) {
             setPageMessage({ type: 'success', text: 'Promene sacuvane!' });

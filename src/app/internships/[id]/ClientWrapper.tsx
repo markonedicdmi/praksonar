@@ -22,8 +22,8 @@ export default function ClientWrapper({ internship, userProfile, isLoggedIn, ini
     const handleSave = async (id: string, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
 
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
             setMessage({ type: 'error', text: 'Morate biti ulogovani da biste sačuvali/uklonili praksu.' });
             return;
         }
@@ -32,7 +32,7 @@ export default function ClientWrapper({ internship, userProfile, isLoggedIn, ini
             const { error } = await supabase
                 .from('saved_internships')
                 .delete()
-                .match({ internship_id: id, user_id: session.user.id });
+                .match({ internship_id: id, user_id: user.id });
 
             if (error) {
                 setMessage({ type: 'error', text: 'Greška pri uklanjanju.' });
@@ -42,7 +42,7 @@ export default function ClientWrapper({ internship, userProfile, isLoggedIn, ini
         } else {
             const { error } = await supabase
                 .from('saved_internships')
-                .insert({ internship_id: id, user_id: session.user.id });
+                .insert({ internship_id: id, user_id: user.id });
 
             if (error && error.code !== '23505') {
                 setMessage({ type: 'error', text: 'Greška pri čuvanju.' });

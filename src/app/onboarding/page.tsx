@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import SonarLoader from '@/components/SonarLoader';
+import { usePalette } from '@/components/PaletteProvider';
 import { User } from '@supabase/supabase-js';
+import { PALETTES, DEFAULT_PALETTE_NAME } from '@/lib/palettes';
 
 const UNIVERSITIES = ['Univerzitet u Beogradu', 'Univerzitet u Novom Sadu', 'Univerzitet u Nišu', 'Univerzitet u Kragujevcu', 'Drugo'];
-const LANGUAGES = ['Engleski', 'Nemački', 'Francuski', 'Španski', 'Italijanski', 'Ruski', 'Drugo'];
-const FIELDS = ['Informatika', 'Ekonomija', 'Pravo', 'Medicina', 'Inženjerstvo', 'Marketing', 'Ljudski resursi', 'Drugo'];
+const LANGUAGES = ['Engleski', 'Nemački', 'Francuski', 'Španski', 'Italijanski', 'Ruski', 'Srpski', 'Drugo'];
+const FIELDS = ['Informatika', 'Ekonomija', 'Pravo', 'Medicina', 'Inženjerstvo', 'Marketing', 'Ljudski resursi', 'Matematika', 'Fizika', 'Drugo'];
 
 const PencilIcon = () => (
     <svg className="w-4 h-4 text-muted absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,6 +21,7 @@ const PencilIcon = () => (
 export default function OnboardingPage() {
     const router = useRouter();
     const supabase = createClient();
+    const { setPalette } = usePalette();
     const [step, setStep] = useState(1);
     const [user, setUser] = useState<User | null>(null);
 
@@ -26,18 +29,15 @@ export default function OnboardingPage() {
     const [universitySelection, setUniversitySelection] = useState<string>('');
     const [customUniversity, setCustomUniversity] = useState('');
 
-    // Multiple languages can be selected, but we will simplify to primary language just like the other fields, 
-    // or allow multiple. The prompt says "what languages can he speak". Let's allow multiple.
-    const [languageSelections, setLanguageSelections] = useState<string[]>([]);
-    const [customLanguage, setCustomLanguage] = useState('');
-
-    // New language diploma & proficiency state
-    const [hasDiploma, setHasDiploma] = useState<string>(''); // 'da' ili 'ne'
-    const [diplomaName, setDiplomaName] = useState('');
-    const [languageLevels, setLanguageLevels] = useState<Record<string, number>>({});
+    const [languagesList, setLanguagesList] = useState<{ lang: string; level: string }[]>([{ lang: 'Srpski', level: 'Maternji' }]);
+    const [newLang, setNewLang] = useState(LANGUAGES[0]);
+    const [newLevel, setNewLevel] = useState('B2');
+    const [customNewLang, setCustomNewLang] = useState('');
 
     const [fieldSelection, setFieldSelection] = useState<string>('');
     const [customField, setCustomField] = useState('');
+
+    const [themeSelection, setThemeSelection] = useState<string>(DEFAULT_PALETTE_NAME);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -53,31 +53,11 @@ export default function OnboardingPage() {
 
     const handleSaveAndFinish = async () => {
         if (!user) return;
-        setStep(4); // Show loader
+        setStep(5); // Show loader
 
         const finalUniversity = universitySelection === 'Drugo' ? customUniversity.trim() : universitySelection;
 
-        const finalLanguages: { lang: string, level: string }[] = [];
-
-        const processLang = (langName: string) => {
-            if (hasDiploma === 'da' && diplomaName.trim()) {
-                return { lang: langName, level: `Diploma: ${diplomaName.trim()}` };
-            } else if (hasDiploma === 'da') {
-                return { lang: langName, level: 'Sertifikovan' };
-            } else if (hasDiploma === 'ne') {
-                const lvl = languageLevels[langName] || 3;
-                return { lang: langName, level: `Nivo ${lvl}/5` };
-            }
-            return { lang: langName, level: 'B2' }; // fallback if skipped
-        };
-
-        languageSelections.forEach(l => {
-            if (l !== 'Drugo') finalLanguages.push(processLang(l));
-        });
-
-        if (languageSelections.includes('Drugo') && customLanguage.trim() !== '') {
-            finalLanguages.push(processLang(customLanguage.trim()));
-        }
+        const finalLanguages = [...languagesList];
 
         const finalField = fieldSelection === 'Drugo' ? customField.trim() : fieldSelection;
 
@@ -91,11 +71,15 @@ export default function OnboardingPage() {
             university: finalUniversity || null,
             languages: finalLanguages.length > 0 ? finalLanguages : null,
             field_of_study: finalField || null,
+            theme_preference: themeSelection,
         };
 
         try {
             // Upsert profile
             await supabase.from('user_profiles').upsert(profileData);
+
+            // Also update the local palette provider so the rest of the app knows about the new theme
+            await setPalette(themeSelection);
 
             // Wait a minimal duration so the loader can be seen and feel like personalization is happening
             setTimeout(() => {
@@ -109,18 +93,34 @@ export default function OnboardingPage() {
         }
     };
 
-    const toggleLanguage = (lang: string) => {
-        if (languageSelections.includes(lang)) {
-            setLanguageSelections(prev => prev.filter(l => l !== lang));
-            setLanguageLevels(prev => { const n = { ...prev }; delete n[lang]; return n; });
-        } else {
-            setLanguageSelections(prev => [...prev, lang]);
-            setLanguageLevels(prev => ({ ...prev, [lang]: 3 }));
+    const handleAddLanguage = () => {
+        const langName = newLang === 'Drugo' ? customNewLang.trim() : newLang;
+
+        if (!langName) {
+            return;
+        }
+
+        const validLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'Maternji'];
+        if (!validLevels.includes(newLevel)) {
+            return;
+        }
+
+        if (languagesList.some(l => l.lang.toLowerCase() === langName.toLowerCase())) {
+            return;
+        }
+
+        setLanguagesList([...languagesList, { lang: langName, level: newLevel }]);
+        if (newLang === 'Drugo') {
+            setCustomNewLang('');
         }
     };
 
+    const removeLanguage = (langName: string) => {
+        setLanguagesList(languagesList.filter(l => l.lang !== langName));
+    };
+
     // Loader State
-    if (step === 4) {
+    if (step === 5) {
         return (
             <div className="fixed inset-0 z-50 bg-app/90 backdrop-blur-sm flex flex-col items-center justify-center">
                 <SonarLoader size={120} />
@@ -138,7 +138,7 @@ export default function OnboardingPage() {
                 <div className="px-6 py-5 border-b border-border bg-app-secondary">
                     <h2 className="text-xl font-medium text-app-text">Personalizacija profila</h2>
                     <div className="mt-3 flex gap-2">
-                        {[1, 2, 3].map(s => (
+                        {[1, 2, 3, 4].map(s => (
                             <div key={s} className={`h-1.5 flex-1 rounded-full ${step >= s ? 'bg-accent' : 'bg-border/50'}`} />
                         ))}
                     </div>
@@ -191,99 +191,68 @@ export default function OnboardingPage() {
                         <div className="space-y-6 animate-fade-in">
                             <div>
                                 <h3 className="text-2xl font-light text-app-text mb-2">Koje jezike govoriš?</h3>
-                                <p className="text-sm text-muted">Znanje jezika je često ključno za inostrane ili remote prakse. Možeš izabrati više.</p>
+                                <p className="text-sm text-muted">Znanje jezika je često ključno za inostrane ili remote prakse. Dodaj jezike koje govoriš.</p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                {LANGUAGES.map(lang => (
-                                    <label key={lang} className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${languageSelections.includes(lang) ? 'border-accent bg-accent/5' : 'border-border hover:border-sidebar bg-input'}`}>
-                                        <input
-                                            type="checkbox"
-                                            name="languages"
-                                            value={lang}
-                                            checked={languageSelections.includes(lang)}
-                                            onChange={() => toggleLanguage(lang)}
-                                            className="w-4 h-4 text-accent focus:ring-accent border-gray-300 rounded"
-                                        />
-                                        <span className="ml-3 font-medium text-app-text text-sm">{lang}</span>
-                                    </label>
+                            <div className="space-y-3">
+                                {languagesList.map((l, i) => (
+                                    <div key={i} className="flex justify-between items-center bg-app-secondary p-3 rounded-xl border border-border">
+                                        <div className="flex items-center gap-3">
+                                            <span className="font-medium text-app-text text-sm">{l.lang}</span>
+                                            <span className="text-xs font-medium uppercase tracking-wider text-text-on-dark bg-sidebar px-2 py-1 rounded">{l.level}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => removeLanguage(l.lang)}
+                                            className="text-muted hover:text-accent font-medium transition-colors w-8 h-8 flex items-center justify-center rounded-full bg-input"
+                                            aria-label="Ukloni jezik"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </button>
+                                    </div>
                                 ))}
+                                {languagesList.length === 0 && <p className="text-sm text-muted italic">Nisu dodati jezici</p>}
                             </div>
 
-                            {languageSelections.includes('Drugo') && (
-                                <div className="relative mt-2 animate-fade-in">
+                            <div className="pt-4 border-t border-border flex flex-col sm:flex-row gap-3">
+                                <select
+                                    value={newLang}
+                                    onChange={(e) => setNewLang(e.target.value)}
+                                    className="flex-1 rounded-lg border-border shadow-sm focus:border-sidebar focus:ring-sidebar py-2.5 px-3 border bg-input text-sm"
+                                >
+                                    {LANGUAGES.map(l => (
+                                        <option key={l} value={l}>{l}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    value={newLevel}
+                                    onChange={(e) => setNewLevel(e.target.value)}
+                                    className="w-full sm:w-28 rounded-lg border-border shadow-sm focus:border-sidebar focus:ring-sidebar py-2.5 px-3 border bg-input text-sm"
+                                >
+                                    {['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'Maternji'].map(l => (
+                                        <option key={l} value={l}>{l}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {newLang === 'Drugo' && (
+                                <div className="relative animate-fade-in">
                                     <input
                                         type="text"
                                         placeholder="Koji tačno jezik? (npr. Kineski, Švedski)"
-                                        value={customLanguage}
-                                        onChange={(e) => {
-                                            setCustomLanguage(e.target.value);
-                                            if (!languageLevels[e.target.value]) {
-                                                setLanguageLevels(prev => ({ ...prev, [e.target.value]: 3 }));
-                                            }
-                                        }}
-                                        className="w-full rounded-lg border-border shadow-sm focus:border-sidebar focus:ring-sidebar py-3 px-4 pr-10 border bg-app-secondary text-sm transition-colors"
+                                        value={customNewLang}
+                                        onChange={(e) => setCustomNewLang(e.target.value)}
+                                        className="w-full rounded-lg border-border shadow-sm focus:border-sidebar focus:ring-sidebar py-2.5 px-4 pr-10 border bg-app-secondary text-sm transition-colors"
                                     />
                                     <PencilIcon />
                                 </div>
                             )}
 
-                            {languageSelections.length > 0 && (
-                                <div className="mt-6 pt-6 border-t border-border animate-fade-in space-y-4">
-                                    <div>
-                                        <p className="text-sm font-medium text-app-text mb-3">Da li imaš diplomu / sertifikat za naznačene jezike?</p>
-                                        <div className="flex gap-4">
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input type="radio" name="diploma" value="da" checked={hasDiploma === 'da'} onChange={() => setHasDiploma('da')} className="text-accent focus:ring-accent w-4 h-4 border-gray-300" />
-                                                <span className="text-sm text-app-text">Da</span>
-                                            </label>
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input type="radio" name="diploma" value="ne" checked={hasDiploma === 'ne'} onChange={() => setHasDiploma('ne')} className="text-accent focus:ring-accent w-4 h-4 border-gray-300" />
-                                                <span className="text-sm text-app-text">Ne</span>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    {hasDiploma === 'da' && (
-                                        <div className="animate-fade-in">
-                                            <input
-                                                type="text"
-                                                placeholder="Unesi naziv sertifikata (npr. Cambridge C1, Goethe B2)"
-                                                value={diplomaName}
-                                                onChange={(e) => setDiplomaName(e.target.value)}
-                                                className="w-full rounded-lg border-border shadow-sm focus:border-sidebar focus:ring-sidebar py-3 px-4 border bg-app-secondary text-sm transition-colors"
-                                            />
-                                        </div>
-                                    )}
-
-                                    {hasDiploma === 'ne' && (
-                                        <div className="space-y-4 animate-fade-in">
-                                            <p className="text-xs text-muted uppercase tracking-wider">Označi nivo znanja od 1 (osnovno) do 5 (odlično)</p>
-                                            {languageSelections.map(lang => {
-                                                const label = lang === 'Drugo' ? (customLanguage || 'Drugi jezik') : lang;
-                                                const val = languageLevels[lang === 'Drugo' ? customLanguage : lang] || 3;
-                                                const key = lang === 'Drugo' ? customLanguage : lang;
-                                                return (
-                                                    <div key={lang} className="flex items-center justify-between gap-4">
-                                                        <span className="text-sm font-medium text-app-text w-1/3 truncate">{label}</span>
-                                                        <div className="flex-1 flex gap-2">
-                                                            {[1, 2, 3, 4, 5].map(level => (
-                                                                <button
-                                                                    key={level}
-                                                                    onClick={() => setLanguageLevels(prev => ({ ...prev, [key]: level }))}
-                                                                    className={`flex-1 h-8 rounded text-xs font-medium transition-colors ${val === level ? 'bg-sidebar text-text-on-dark shadow-sm' : 'bg-input border border-border text-app-text hover:border-sidebar'}`}
-                                                                >
-                                                                    {level}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                            <button
+                                onClick={handleAddLanguage}
+                                className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium bg-sidebar text-text-on-dark rounded-lg hover:opacity-90 transition-opacity"
+                            >
+                                Dodaj jezik
+                            </button>
                         </div>
                     )}
 
@@ -326,33 +295,104 @@ export default function OnboardingPage() {
                         </div>
                     )}
 
+                    {/* Step 4: Theme */}
+                    {step === 4 && (
+                        <div className="space-y-6 animate-fade-in">
+                            <div>
+                                <h3 className="text-2xl font-light text-app-text mb-2">Izaberi temu</h3>
+                                <p className="text-sm text-muted">Možeš je uvek promeniti u podešavanjima.</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {Object.values(PALETTES).map((palette) => {
+                                    const isSelected = themeSelection === palette.name;
+                                    return (
+                                        <div
+                                            key={palette.name}
+                                            onClick={() => {
+                                                setThemeSelection(palette.name);
+
+                                                // Live preview immediately
+                                                const root = document.documentElement;
+                                                root.style.setProperty('--color-sidebar', palette.colors.sidebar);
+                                                root.style.setProperty('--color-accent', palette.colors.accent);
+                                                root.style.setProperty('--color-bg', palette.colors.bg);
+                                                root.style.setProperty('--color-bg-secondary', palette.colors.bgSecondary);
+                                                root.style.setProperty('--color-card', palette.colors.card);
+                                                root.style.setProperty('--color-text', palette.colors.text);
+                                                root.style.setProperty('--color-text-on-dark', palette.colors.textOnDark);
+                                                root.style.setProperty('--color-text-muted', palette.colors.textMuted);
+                                                root.style.setProperty('--color-border', palette.colors.border);
+                                                root.style.setProperty('--color-success-bg', palette.colors.successBg);
+                                                root.style.setProperty('--color-success-text', palette.colors.successText);
+                                                root.style.setProperty('--color-error-bg', palette.colors.errorBg);
+                                                root.style.setProperty('--color-error-text', palette.colors.errorText);
+                                                root.style.setProperty('--color-sidebar-muted', palette.colors.sidebarMuted);
+                                                root.style.setProperty('--color-input', palette.colors.input);
+
+                                                if (palette.isDark) {
+                                                    root.classList.add('dark');
+                                                } else {
+                                                    root.classList.remove('dark');
+                                                }
+                                            }}
+                                            className={`relative flex flex-col items-center gap-3 p-4 rounded-xl cursor-pointer border-2 transition-all hover:scale-[1.02] ${isSelected ? 'border-accent bg-accent/5' : 'border-border bg-card'}`}
+                                        >
+                                            <div className="flex w-full h-12 rounded-lg overflow-hidden border border-border shadow-sm">
+                                                <div className="flex-1" style={{ backgroundColor: palette.colors.sidebar }} />
+                                                <div className="flex-1" style={{ backgroundColor: palette.colors.accent }} />
+                                            </div>
+                                            <span className="text-sm font-medium text-app-text text-center">{palette.name}</span>
+                                            {isSelected && (
+                                                <div className="absolute -top-2 -right-2 bg-accent text-text-on-dark rounded-full p-1 shadow-md">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                 </div>
 
                 {/* Footer Controls */}
                 <div className="px-6 py-4 border-t border-border bg-card flex items-center justify-between gap-4">
-                    <button
-                        onClick={() => {
-                            if (step === 1) setStep(2);
-                            else if (step === 2) setStep(3);
-                            else handleSaveAndFinish();
-                        }}
-                        className="text-muted hover:text-app-text font-medium text-sm px-4 py-2 transition-colors focus:outline-none"
-                    >
-                        Preskoči
-                    </button>
+                    <div className="flex gap-2">
+                        {step > 1 && (
+                            <button
+                                onClick={() => setStep(step - 1)}
+                                className="text-muted hover:text-app-text font-medium text-sm px-4 py-2 transition-colors focus:outline-none"
+                            >
+                                Nazad
+                            </button>
+                        )}
+                        <button
+                            onClick={() => {
+                                if (step === 1) setStep(2);
+                                else if (step === 2) setStep(3);
+                                else if (step === 3) setStep(4);
+                                else handleSaveAndFinish();
+                            }}
+                            className="text-muted hover:text-app-text font-medium text-sm px-4 py-2 transition-colors focus:outline-none"
+                        >
+                            Preskoči
+                        </button>
+                    </div>
 
                     <button
                         onClick={() => {
                             if (step === 1) setStep(2);
                             else if (step === 2) setStep(3);
+                            else if (step === 3) setStep(4);
                             else handleSaveAndFinish();
                         }}
                         className="px-6 py-2.5 bg-accent text-text-on-dark font-medium rounded-lg shadow hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                     >
-                        {step === 3 ? 'Završi' : 'Sledeće'}
+                        {step === 4 ? 'Završi' : 'Sledeće'}
                     </button>
                 </div>
-
             </div>
         </div>
     );

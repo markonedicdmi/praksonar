@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /internships/*
+Sitemap: https://praksonar.com/sitemap.xml

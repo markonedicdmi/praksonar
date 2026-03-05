@@ -21,8 +21,9 @@ export default function ClientShell({ user, profile, children }: ClientShellProp
         setIsSidebarOpen(false);
     }, [pathname]);
 
-    // Sidebar should be shown if user is logged in, or if on specific public app-like pages
-    const showSidebar = user || pathname.startsWith('/internships') || pathname.startsWith('/settings') || pathname.startsWith('/cv-writer');
+    // Sidebar should be shown if user is logged in (but NOT on homepage), or if on specific public app-like pages
+    const isHomepage = pathname === '/';
+    const showSidebar = !isHomepage && (user || pathname.startsWith('/internships') || pathname.startsWith('/settings') || pathname.startsWith('/cv-writer'));
 
     if (!showSidebar) {
         return (

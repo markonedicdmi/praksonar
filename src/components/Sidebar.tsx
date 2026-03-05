@@ -47,7 +47,7 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
         { name: 'Prakse', href: '/internships', icon: <BriefcaseIcon /> },
         { name: 'Moj Profil', href: '/profile', icon: <UserIcon /> },
         { name: 'CV Pisac', href: '/cv-writer', icon: <DocumentIcon />, badge: 'uskoro' },
-        { name: 'O meni', href: '/o-meni', icon: <InfoIcon /> },
+        { name: 'O autoru', href: '/o-autoru', icon: <InfoIcon /> },
         { name: 'Podešavanja', href: '/settings', icon: <SettingsIcon /> },
     ];
 
@@ -56,7 +56,7 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
         { name: 'Prijavi se', href: '/auth/login', icon: <LoginIcon /> },
         { name: 'Registruj se', href: '/auth/register', icon: <RegisterIcon />, highlight: true },
         { name: 'CV Pisac', href: '/cv-writer', icon: <DocumentIcon />, badge: 'uskoro' },
-        { name: 'O meni', href: '/o-meni', icon: <InfoIcon /> },
+        { name: 'O autoru', href: '/o-autoru', icon: <InfoIcon /> },
         { name: 'Podešavanja', href: '/settings', icon: <SettingsIcon /> }
     ];
 

@@ -1,116 +1,236 @@
+'use client';
+
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
+import StatBadge from '@/components/StatBadge';
+import { useEffect, useState } from 'react';
 
-export default async function Home() {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+export default function HomePage() {
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [isSkillChecked, setIsSkillChecked] = useState(false);
 
-  if (session) {
-    redirect('/internships');
-  }
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('fade-in-visible');
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    document.querySelectorAll('.fade-in').forEach((el) => {
+      observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  const handleNavClick = () => {
+    setIsNavigating(true);
+  };
 
   return (
-    <div className="flex-1 flex flex-col relative overflow-x-hidden min-h-screen">
+    <div className="w-full bg-app min-h-screen text-app-text overflow-x-hidden font-sans">
 
-
-      {/* HERO */}
-      <section className="relative z-10 flex flex-col items-center justify-center min-h-[60vh] px-4 text-center mt-10 md:mt-16">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-normal text-app-text tracking-wide mb-6 leading-tight">
-          Sve prakse.<br /> Na jednom mestu.
-        </h1>
-        <p className="text-muted text-lg sm:text-xl max-w-2xl mb-12 font-light">
-          Praksonar automatski prikuplja prakse za studente iz Srbije — svaki dan.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-          <Link
-            href="/internships"
-            className="bg-accent text-text-on-dark px-8 py-3.5 rounded-lg font-medium text-lg hover:bg-yellow-600 transition-all shadow-md focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-          >
-            Pronađi praksu
-          </Link>
-          <Link
-            href="/auth/register"
-            className="bg-card border text-accent border-border px-8 py-3.5 rounded-lg font-medium text-lg hover:border-sidebar hover:text-accent hover:bg-sidebar bg-opacity-5 transition-colors shadow-sm"
-          >
-            Napravi nalog
-          </Link>
+      {/* GLOBAL RADAR LOADER OVERLAY */}
+      {isNavigating && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-app/80 backdrop-blur-sm">
+          <iframe src="/radar.html" className="w-[300px] h-[300px] border-none" title="Loading..." />
         </div>
-      </section>
+      )}
 
-      {/* HOW IT WORKS */}
-      <section className="relative z-10 max-w-5xl mx-auto w-full px-4 py-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-card border border-border rounded-xl p-8 flex flex-col text-center shadow-sm hover:shadow-md transition-shadow">
-            <span className="text-accent text-4xl font-light mb-4">01</span>
-            <h3 className="text-app-text text-xl font-medium mb-3">Napravite profil</h3>
-            <p className="text-muted text-sm leading-relaxed">Unesite fakultet, smer, jezike i veštine kojim vladate kako bismo vam prilagodili ponudu.</p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-8 flex flex-col text-center shadow-sm hover:shadow-md transition-shadow">
-            <span className="text-accent text-4xl font-light mb-4">02</span>
-            <h3 className="text-app-text text-xl font-medium mb-3">Pregledajte prakse</h3>
-            <p className="text-muted text-sm leading-relaxed">Baza sa desetinama aktivnih pozicija se sama osvežava sa popularnih platformi svakog dana.</p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-8 flex flex-col text-center shadow-sm hover:shadow-md transition-shadow">
-            <span className="text-accent text-4xl font-light mb-4">03</span>
-            <h3 className="text-app-text text-xl font-medium mb-3">Skill Checklist</h3>
-            <p className="text-muted text-sm leading-relaxed">Praksonar precizno poredi vaše veštine sa onim što firma traži na svakom oglasu.</p>
-          </div>
-        </div>
-      </section>
+      <div className="max-w-5xl mx-auto px-4 md:px-8 py-12 md:py-20 flex flex-col items-center">
 
-      {/* SOURCES */}
-      <section className="relative z-10 w-full px-4 py-16 flex flex-col items-center">
-        <h3 className="text-muted text-sm uppercase tracking-wider mb-8 font-medium">Izvori pretrage</h3>
-        <div className="flex flex-wrap justify-center gap-4">
-          <div className="text-sm font-medium text-app-text bg-card border border-border px-6 py-2.5 rounded-full shadow-sm">
-            Infostud
+        {/* SECTION 1 - HERO */}
+        <section className="fade-in w-full flex flex-col items-center text-center mt-8 md:mt-16 mb-16 md:mb-24">
+          <h1 className="text-4xl md:text-6xl font-bold leading-tight md:leading-tight text-app-text max-w-3xl mb-4">
+            Sve prakse <br className="hidden md:block" />
+            <span className="relative inline-block text-app-text">
+              na jednom mestu.
+              <svg className="absolute -bottom-4 md:-bottom-6 left-0 w-full" width="100%" height="20" viewBox="0 0 300 20" preserveAspectRatio="none">
+                <path d="M 0,10 Q 75,0 150,10 Q 225,20 300,10" stroke="var(--color-accent)" strokeWidth="4" fill="none" opacity="0.9" />
+              </svg>
+            </span>
+          </h1>
+          <p className="text-lg md:text-xl text-muted max-w-2xl mt-8 mb-10 font-light leading-relaxed">
+            Fakultet, ispiti, obaveze... Znamo da već imaš previše toga na tanjiru. Neka <span className="inline-block align-middle h-5 w-28 bg-current -mt-1 ml-1" style={{ WebkitMask: 'url("/logo with text updated.png") no-repeat center/contain', mask: 'url("/logo with text updated.png") no-repeat center/contain' }} aria-label="Praksonar" /> preuzme beskrajno pretraživanje praksi umesto tebe.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <Link href="/internships" onClick={handleNavClick} className="w-full sm:w-auto bg-accent text-white px-8 py-3.5 rounded-xl font-medium text-lg hover:bg-opacity-90 transition-all hover:scale-105 shadow-md">
+              Pretraži prakse →
+            </Link>
+            <Link href="/auth/register" onClick={handleNavClick} className="w-full sm:w-auto bg-transparent border-2 border-border text-app-text px-8 py-3.5 rounded-xl font-medium text-lg hover:border-sidebar hover:text-sidebar transition-all shadow-sm">
+              Registruj se besplatno
+            </Link>
           </div>
-          <div className="text-sm font-medium text-app-text bg-card border border-border px-6 py-2.5 rounded-full shadow-sm">
-            Erasmus
-          </div>
-          <div className="text-sm font-medium text-app-text bg-card border border-border px-6 py-2.5 rounded-full shadow-sm">
-            Reddit
-          </div>
-          <div className="text-sm font-medium text-muted bg-app-secondary border border-border px-6 py-2.5 rounded-full">
-            Još izvora uskoro
-          </div>
-        </div>
-      </section>
+          <StatBadge />
+        </section>
 
-      {/* KO-FI */}
-      <section className="relative z-10 w-full max-w-2xl mx-auto px-4 py-24 text-center">
-        <p className="text-muted text-lg mb-8 leading-relaxed font-light">
-          Praksonar je besplatan i pravi ga student, baš kao i ti. Ako ti je koristan, možeš da podržiš dalji razvoj platforme.
-        </p>
-        <a
-          href="https://ko-fi.com/nedic"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 bg-card border border-border text-accent px-6 py-3 rounded-lg font-medium hover:border-accent hover:text-accent transition-colors text-sm shadow-sm"
-        >
-          <svg className="w-5 h-5 text-[#FF5E5B]" viewBox="0 0 50 50" fill="currentColor">
-            <path d="M 25 2 C 12.309288 2 2 12.309297 2 25 C 2 37.690703 12.309288 48 25 48 C 37.690712 48 48 37.690703 48 25 C 48 12.309297 37.690712 2 25 2 z M 25 4 C 36.609833 4 46 13.390175 46 25 C 46 36.609825 36.609833 46 25 46 C 13.390167 46 4 36.609825 4 25 C 4 13.390175 13.390167 4 25 4 z M 14.636719 14.394531 C 12.640426 14.394531 11 16.033004 11 18.029297 L 11 32.091797 C 11 34.573412 13.03401 36.605469 15.515625 36.605469 L 30.453125 36.605469 C 32.93474 36.605469 34.96875 34.573412 34.96875 32.091797 L 34.96875 31.072266 C 39.171089 30.320232 42.359577 26.577015 41.966797 22.103516 C 41.57761 17.671107 37.691909 14.394531 33.287109 14.394531 L 14.636719 14.394531 z M 14.636719 16.394531 L 33.287109 16.394531 C 36.70231 16.394531 39.679796 18.921705 39.974609 22.279297 C 40.301446 26.001745 37.498921 29.11721 33.910156 29.326172 L 32.96875 29.380859 L 32.96875 32.091797 C 32.96875 33.492182 31.85351 34.605469 30.453125 34.605469 L 15.515625 34.605469 C 14.11524 34.605466 13 33.492182 13 32.091797 L 13 18.029297 C 13 17.11359 13.721012 16.394531 14.636719 16.394531 z M 32.970703 17.818359 L 32.970703 27.935547 L 34.080078 27.8125 C 36.564518 27.536032 38.484375 25.398372 38.484375 22.863281 C 38.484375 20.312286 36.586714 18.133428 34.056641 17.912109 L 32.970703 17.818359 z M 19.908203 19.886719 C 17.66975 19.886719 15.832031 21.724438 15.832031 23.962891 C 15.832031 25.158867 16.358618 26.251124 17.203125 26.990234 L 17.148438 26.939453 L 22.544922 32.416016 L 27.941406 26.939453 L 27.886719 26.990234 C 28.73206 26.251729 29.259136 25.158315 29.257812 23.960938 C 29.256712 21.723385 27.41943 19.886719 25.181641 19.886719 C 24.16042 19.886719 23.259857 20.325278 22.544922 20.962891 C 21.829987 20.325278 20.929424 19.886719 19.908203 19.886719 z M 34.970703 20.451172 C 35.824808 20.958201 36.484375 21.744314 36.484375 22.863281 C 36.484375 23.933381 35.818128 24.720832 34.970703 25.246094 L 34.970703 20.451172 z M 22.892578 21.207031 L 22.9375 21.255859 C 22.9326 21.250259 22.924862 21.247757 22.919922 21.242188 C 22.909042 21.230967 22.903708 21.218161 22.892578 21.207031 z M 22.195312 21.208984 C 22.184532 21.219844 22.180472 21.233191 22.169922 21.244141 C 22.165222 21.249441 22.156994 21.250539 22.152344 21.255859 L 22.195312 21.208984 z M 19.908203 21.886719 C 20.522227 21.886719 21.062751 22.150773 21.431641 22.572266 L 21.455078 22.597656 L 21.478516 22.621094 C 21.545966 22.688544 21.622109 22.789954 21.677734 22.886719 L 22.541016 24.388672 L 23.410156 22.890625 C 23.468176 22.790735 23.547059 22.687803 23.615234 22.619141 L 23.636719 22.595703 L 23.658203 22.572266 C 24.027093 22.150773 24.567617 21.886719 25.181641 21.886719 C 26.335188 21.886719 27.257812 22.809343 27.257812 23.962891 C 27.258489 24.575513 26.990972 25.11688 26.570312 25.484375 L 26.542969 25.509766 L 26.517578 25.537109 L 22.544922 29.568359 L 18.546875 25.509766 L 18.519531 25.486328 C 18.098038 25.117438 17.832031 24.576915 17.832031 23.962891 C 17.832031 22.809343 18.754656 21.886719 19.908203 21.886719 z" />
-          </svg>
-          Podrži na Ko-fi
-        </a>
-      </section>
+        {/* LOGO MARQUEE / STRIP */}
+        <section className="fade-in w-full text-center mb-20 md:mb-32">
+          <p className="text-sm text-muted mb-8 uppercase tracking-widest font-medium">Prikupljamo prakse i prilike sa svih strana</p>
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-14 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+            <span className="text-xl md:text-2xl font-bold tracking-tight">Infostud</span>
+            <span className="text-xl md:text-2xl font-bold tracking-tight">HelloWorld</span>
+            <span className="text-xl md:text-2xl font-bold tracking-tight">Facebook grupe</span>
+            <span className="text-xl md:text-2xl font-bold tracking-tight">WhatsApp</span>
+            <span className="text-xl md:text-2xl font-bold tracking-tight">Telegram</span>
+          </div>
+        </section>
 
-      {/* FOOTER */}
-      <footer className="relative z-10 border-t border-border/60 bg-card/50 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted font-medium tracking-wide">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <Link href="/internships" className="hover:text-accent transition-colors uppercase tracking-wider">Prakse</Link>
-            <Link href="/auth/register" className="hover:text-accent transition-colors uppercase tracking-wider">Registruj se</Link>
-            <Link href="/o-meni" className="hover:text-accent transition-colors uppercase tracking-wider">O meni</Link>
-            <a href="mailto:kontakt@praksonar.com" className="hover:text-accent transition-colors uppercase tracking-wider">Kontakt</a>
-            <Link href="/politika-privatnosti" className="hover:text-accent transition-colors uppercase tracking-wider">Politika privatnosti</Link>
+        {/* SECTION 2 - HOW IT WORKS */}
+        <section className="fade-in w-full mb-20 md:mb-32">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Kako funkcioniše?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            {/* Card 1 */}
+            <div className="bg-card p-10 rounded-xl border border-border hover:border-accent/30 transition-all hover:-translate-y-1 hover:shadow-xl group flex flex-col">
+              <div className="w-14 h-14 bg-app rounded-xl flex items-center justify-center mb-6 overflow-hidden relative group-hover:bg-accent/10 transition-colors">
+                <iframe src="/radar.html" className="w-[120px] h-[120px] absolute pointer-events-none scale-[0.28] origin-center" title="Loading..." />
+              </div>
+              <h3 className="text-xl font-bold mb-4">
+                <span className="relative inline-block text-app-text">
+                  Sve prakse
+                  <svg className="absolute -bottom-2 left-0 w-full" width="100%" height="8" viewBox="0 0 100 8" preserveAspectRatio="none">
+                    <path d="M 0,4 Q 25,0 50,4 Q 75,8 100,4" stroke="var(--color-accent)" strokeWidth="2" fill="none" opacity="0.9" />
+                  </svg>
+                </span>
+                {' '}odmah
+              </h3>
+              <p className="text-muted leading-relaxed mb-6">
+                Ogromna baza praksi dostupna 24/7, budi prvi koji će se prijaviti uz <span className="inline-block align-middle h-4 w-24 bg-current -mt-1 ml-1" style={{ WebkitMask: 'url("/logo with text updated.png") no-repeat center/contain', mask: 'url("/logo with text updated.png") no-repeat center/contain' }} aria-label="Praksonar" />.
+              </p>
+              <button type="button" className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-app text-app-text rounded-lg border border-border hover:border-accent hover:text-accent transition-colors text-sm font-medium mt-auto group-hover:bg-accent/5">
+                <svg className="w-4 h-4 transition-transform group-hover:rotate-180 duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Osveži listu
+              </button>
+            </div>
+
+            {/* Card 2 */}
+            <div className="bg-card p-10 rounded-xl border border-border hover:border-accent/30 transition-all hover:-translate-y-1 hover:shadow-xl group flex flex-col">
+              <div className="w-14 h-14 bg-app rounded-xl flex items-center justify-center mb-6 group-hover:bg-accent/10 transition-colors">
+                <svg className="w-7 h-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold mb-3">Skill Checklist</h3>
+              <p className="text-muted leading-relaxed mb-6">
+                Automatski poredi tvoje veštine sa zahtevima prakse pre slanja prijave.
+              </p>
+              <div
+                className="mt-auto bg-app p-3 rounded-lg border border-border flex items-center gap-3 w-full group-hover:border-accent/30 transition-colors cursor-pointer"
+                onClick={() => setIsSkillChecked(!isSkillChecked)}
+              >
+                <div className="relative flex items-center justify-center flex-shrink-0 w-5 h-5">
+                  {/* Glowing ring that invites clicking */}
+                  {!isSkillChecked && (
+                    <div className="absolute inset-0 rounded-md bg-accent animate-ping opacity-75" style={{ animationDuration: '3s' }}></div>
+                  )}
+                  <div className={`relative z-10 w-full h-full rounded-md flex items-center justify-center border transition-all duration-300 ${isSkillChecked ? 'bg-[#22c55e] border-[#22c55e] text-white' : 'bg-app border-accent shadow-[0_0_8px_var(--color-accent)] text-transparent'}`}>
+                    <svg className={`w-3.5 h-3.5 transition-transform duration-300 ${isSkillChecked ? 'scale-100' : 'scale-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                </div>
+                <span className={`text-sm font-medium transition-all duration-300 ${isSkillChecked ? 'text-muted line-through decoration-muted/50' : 'text-app-text'}`}>
+                  Good problem-solving skills
+                </span>
+              </div>
+            </div>
+
+            {/* Card 3 */}
+            <div className="relative bg-card p-10 rounded-xl border border-border hover:border-accent/30 transition-all hover:-translate-y-1 hover:shadow-xl group">
+              <span className="absolute top-5 right-5 bg-app text-accent text-xs font-bold px-3 py-1.5 rounded-full border border-border">Uskoro</span>
+              <div className="w-14 h-14 bg-app rounded-xl flex items-center justify-center mb-6 group-hover:bg-accent/10 transition-colors">
+                <svg className="w-7 h-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold mb-3">AI ti piše prijavu</h3>
+              <p className="text-muted leading-relaxed">
+                CV Pisac će generisati personalizovano motivaciono pismo za svaku praksu za koju apliciraš.
+              </p>
+            </div>
           </div>
-          <div>
-            Napravio student iz Srbije
+        </section>
+
+        {/* SECTION 3 - FOR WHO */}
+        <section className="fade-in w-full mb-20 md:mb-32">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+            Za koga je <span className="inline-block align-middle h-8 w-40 bg-current -mt-2 ml-1" style={{ WebkitMask: 'url("/logo with text updated.png") no-repeat center/contain', mask: 'url("/logo with text updated.png") no-repeat center/contain' }} aria-label="Praksonar" /> ?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold text-app-text mb-6 pb-4 border-b border-border">Ako si student koji...</h3>
+              <ul className="space-y-5">
+                {[
+                  'Želi da pije kafu umesto da gugla prakse',
+                  'Prijavljuje se na prakse ali ne dobija odgovor',
+                  'Ne zna tačno koje veštine mu nedostaju',
+                  'Želi da aplicira brže i sa boljim prijavama'
+                ].map((item, i) => (
+                  <li key={i} className="flex gap-4 group">
+                    <svg className="w-6 h-6 text-accent flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-muted leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold text-app-text mb-6 pb-4 border-b border-border">
+                <span className="inline-block align-middle h-6 w-32 bg-current -mt-1" style={{ WebkitMask: 'url("/logo with text updated.png") no-repeat center/contain', mask: 'url("/logo with text updated.png") no-repeat center/contain' }} aria-label="Praksonar" /> ti daje...
+              </h3>
+              <ul className="space-y-5">
+                {[
+                  'Više vremena da se zapravo spremiš za praksu',
+                  'Pregled skill gapova pre apliciranja',
+                  'AI pisac motivacionih pisama (uskoro)',
+                  'Instant notifikacije kad izađe nova praksa'
+                ].map((item, i) => (
+                  <li key={i} className="flex gap-4 group">
+                    <svg className="w-6 h-6 text-accent flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-app-text font-medium leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-        </div>
-      </footer>
-    </div>
+        </section>
+
+        {/* SECTION 4 - CTA BANNER */}
+        <section className="fade-in w-full mb-16 md:mb-24">
+          <div className="bg-sidebar rounded-2xl p-10 md:p-16 text-center shadow-xl relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-sidebar to-sidebar-muted/10 opacity-60 z-0"></div>
+            <div className="relative z-10 flex flex-col items-center">
+              <h2 className="text-3xl md:text-5xl font-bold text-text-on-dark mb-4 drop-shadow-sm">Počni danas. Besplatno.</h2>
+              <p className="text-sidebar-muted text-lg mb-8 max-w-xl mx-auto font-light">
+                Registracija traje 2 minuta. Nema kreditne kartice.
+              </p>
+              <Link href="/auth/register" onClick={handleNavClick} className="bg-text-on-dark text-sidebar px-10 py-4 rounded-xl font-bold text-lg hover:bg-accent hover:text-white transition-all hover:scale-105 shadow-xl hover:shadow-accent/40">
+                Registruj se →
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 5 - FOOTER */}
+        <footer className="fade-in w-full border-t border-border pt-10 pb-6 flex flex-col sm:flex-row items-center justify-between gap-6 text-sm text-muted font-light">
+          <div>© 2026 Praksonar</div>
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8">
+            <Link href="/o-autoru" className="hover:text-accent transition-colors">O autoru</Link>
+            <a href="mailto:kontakt@praksonar.com" className="hover:text-accent transition-colors">Kontakt</a>
+            <Link href="/politika-privatnosti" className="hover:text-accent transition-colors">Politika privatnosti</Link>
+          </div>
+        </footer>
+
+      </div >
+    </div >
   );
 }
