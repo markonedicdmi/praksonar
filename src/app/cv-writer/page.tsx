@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { trackEvent } from '@/lib/analytics';
 
 const FEATURES = [
     'Personalizovano za svaki oglas posebno',
@@ -64,6 +65,7 @@ export default function CvWriterPage() {
             return;
         }
 
+        trackEvent('cv_waitlist_signup');
         setSubmitted(true);
     };
 

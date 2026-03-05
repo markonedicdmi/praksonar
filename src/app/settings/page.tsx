@@ -263,8 +263,9 @@ export default function SettingsPage() {
 
     if (loading) {
         return (
-            <div className="flex-1 flex items-center justify-center p-16">
-                <SonarLoader size={100} />
+            <div className="flex-1 flex flex-col items-center justify-center p-16 min-h-[60vh]">
+                <SonarLoader size={120} />
+                <p className="mt-4 text-app-text font-medium tracking-widest text-sm uppercase">Učitavanje...</p>
             </div>
         );
     }

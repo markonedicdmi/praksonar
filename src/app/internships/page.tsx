@@ -8,6 +8,7 @@ import InternshipCard from '@/components/InternshipCard';
 import InternshipDetail from '@/components/InternshipDetail';
 import InlineMessage from '@/components/InlineMessage';
 import SonarLoader from '@/components/SonarLoader';
+import { trackEvent } from '@/lib/analytics';
 
 // Filter option constants
 const FIELDS = [
@@ -273,6 +274,7 @@ function InternshipsContent() {
 
     // Update a single URL filter param. Removes param when set to default value.
     const updateFilter = (key: string, value: string) => {
+        trackEvent('filter_used', { filter_type: key, filter_value: value });
         const params = new URLSearchParams(searchParams.toString());
 
         // When switching away from Srbija, clear city filter
@@ -291,6 +293,7 @@ function InternshipsContent() {
 
     // Toggle a source in the multi-select sources param
     const toggleSource = (source: string) => {
+        trackEvent('filter_used', { filter_type: 'source', filter_value: source });
         const current = new Set(selectedSources);
         if (current.has(source)) {
             current.delete(source);
@@ -357,6 +360,7 @@ function InternshipsContent() {
     };
 
     const handleRefresh = async () => {
+        trackEvent('scraper_refresh_clicked');
         if (refreshCooldown) {
             setPageMessage({ type: 'info', text: 'Sačekajte pre nego što ponovo osvežite.' });
             return;
@@ -735,7 +739,7 @@ function InternshipsContent() {
                     style={{ height: isFullScreen ? '96vh' : '75vh' }}
                 >
                     <button
-                        className="w-full pt-4 pb-3 flex justify-center items-center touch-none focus:outline-none shrink-0"
+                        className="w-full pt-[12px] pb-3 flex justify-center items-center touch-none focus:outline-none shrink-0"
                         onTouchStart={(e) => setStartY(e.touches[0].clientY)}
                         onTouchEnd={(e) => {
                             const endY = e.changedTouches[0].clientY;
@@ -750,7 +754,10 @@ function InternshipsContent() {
                         onClick={() => setIsFullScreen(!isFullScreen)}
                         aria-label="Promeni veličinu prozora"
                     >
-                        <div className="w-12 h-1.5 bg-border/60 hover:bg-border/80 transition-colors rounded-full" />
+                        <div
+                            className="w-[40px] h-[4px] rounded-full"
+                            style={{ backgroundColor: 'var(--color-text-muted)', opacity: 0.4 }}
+                        />
                     </button>
                     <div className="flex-1 overflow-y-auto pb-8 px-4">
                         <InternshipDetail

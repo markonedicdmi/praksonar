@@ -7,6 +7,7 @@ import SonarLoader from '@/components/SonarLoader';
 import { usePalette } from '@/components/PaletteProvider';
 import { User } from '@supabase/supabase-js';
 import { PALETTES, DEFAULT_PALETTE_NAME } from '@/lib/palettes';
+import { trackEvent } from '@/lib/analytics';
 
 const UNIVERSITIES = ['Univerzitet u Beogradu', 'Univerzitet u Novom Sadu', 'Univerzitet u Nišu', 'Univerzitet u Kragujevcu', 'Drugo'];
 const LANGUAGES = ['Engleski', 'Nemački', 'Francuski', 'Španski', 'Italijanski', 'Ruski', 'Srpski', 'Drugo'];
@@ -80,6 +81,8 @@ export default function OnboardingPage() {
 
             // Also update the local palette provider so the rest of the app knows about the new theme
             await setPalette(themeSelection);
+
+            trackEvent('register_complete');
 
             // Wait a minimal duration so the loader can be seen and feel like personalization is happening
             setTimeout(() => {

@@ -1,6 +1,7 @@
 import scrapy
 from datetime import datetime
 from praksonar.items import InternshipItem
+from praksonar.utils import clean_description, extract_skills, extract_languages, parse_deadline, clean_url
 
 class InfostudSpider(scrapy.Spider):
     name = "infostud"
@@ -19,7 +20,7 @@ class InfostudSpider(scrapy.Spider):
                 item = InternshipItem()
                 
                 # Element is an <a> tag itself, so URL is its href
-                item['source_url'] = response.urljoin(listing.attrib.get('href', ''))
+                item['source_url'] = clean_url(response.urljoin(listing.attrib.get('href', '')))
                 
                 title_elem = listing.css('h2::text').get(default='').strip()
                 if not title_elem:
@@ -59,6 +60,13 @@ class InfostudSpider(scrapy.Spider):
         item = response.meta['item']
         
         try:
+            # If location was not captured from listing card, try the detail page
+            if not item.get('location'):
+                loc = response.css('span.job-location::text').get(default='').strip()
+                if not loc:
+                    loc = response.xpath('//i[contains(@class, "ph-map-pin")]/following-sibling::*//span/text()').get(default='').strip()
+                item['location'] = loc
+
             # Look for structured JSON-LD data which contains the raw job description
             scripts = response.xpath('//script[@type="application/ld+json"]//text()').getall()
             desc_html = ""
@@ -69,29 +77,26 @@ class InfostudSpider(scrapy.Spider):
                         data = json.loads(script_text)
                         desc_html = data.get('description', '')
                         break
-                    except:
+                    except Exception:
                         pass
             
             # If we got the HTML description from schema, parse it
             if desc_html:
                 desc_sel = scrapy.Selector(text=desc_html)
                 
-                # Extract clean description
-                all_texts = desc_sel.xpath('//text()').getall()
-                cleaned = [t.strip() for t in all_texts if t.strip()]
-                item['description'] = ' '.join(cleaned)
+                # Extract clean description (html entities decoded, UI artifacts removed)
+                item['description'] = clean_description(desc_html)
                 
-                # Extract requirements by attempting to find headers or fallback to all LIs
+                all_texts = desc_sel.xpath('//text()').getall()
+                full_text = ' '.join([t.strip() for t in all_texts if t.strip()])
+                
+                # Extract requirements from structured section only — no fallback to all LIs
                 req_skills = []
                 import re
                 
-                # Try to find all ULs and map them to their preceding text
-                # Because the structure is often flat, we serialize the elements
-                # A robust approach: parse all elements and track the last seen 'text'
                 elements = desc_sel.xpath('//p | //div | //ul | //li | //strong | //b | //h2 | //h3 | //h4 | //text()')
                 
                 looking_for_reqs = False
-                found_dedicated_list = False
                 
                 for el in elements:
                     if type(el.root) is str:
@@ -104,39 +109,18 @@ class InfostudSpider(scrapy.Spider):
                             if li_text:
                                 req_skills.append(li_text)
                         looking_for_reqs = False
-                        found_dedicated_list = True
-                
-                # Fallback: if we didn't identify a specific section, extract all LIs
-                if not found_dedicated_list:
-                    req_skills = []
-                    for li in desc_sel.css('li'):
-                        li_text = " ".join(li.css('*::text').getall()).strip()
-                        if li_text:
-                            req_skills.append(li_text)
                             
-                item['required_skills'] = req_skills
+                item['required_skills'] = extract_skills(req_skills)
+                item['required_languages'] = extract_languages(full_text)
 
             # Extract deadline and post date exactly from the individual page DOM
             rok_str = response.xpath('//span[contains(text(), "Rok za prijavu")]/parent::span/following-sibling::span/text()').get()
             post_str = response.xpath('//span[contains(text(), "Postavljeno")]/parent::span/following-sibling::span/text()').get()
             
-            def parse_date(date_text):
-                if not date_text:
-                    return None
-                try:
-                    clean_str = date_text.strip().rstrip('.')
-                    dt = datetime.strptime(clean_str, '%d.%m.%Y')
-                    return dt.strftime('%Y-%m-%d')
-                except ValueError:
-                    return None
-
-            item['deadline'] = parse_date(rok_str)
-            parsed_post = parse_date(post_str)
+            item['deadline'] = parse_deadline(rok_str)
+            parsed_post = parse_deadline(post_str)
             if parsed_post:
                 item['created_at'] = parsed_post
-                 
-            # Default empty list for languages unless we explicitly extract them via NLP later
-            item['required_languages'] = []
             
         except Exception as e:
             self.logger.error(f"Error extracting details from {response.url}: {e}")

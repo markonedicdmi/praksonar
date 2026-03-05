@@ -1,6 +1,7 @@
 'use client';
 
 import { Internship } from '@/lib/skillGap';
+import { trackEvent } from '@/lib/analytics';
 
 interface InternshipCardProps {
     internship: Internship;
@@ -14,9 +15,19 @@ export default function InternshipCard({ internship, isSaved, isSelected, onClic
     const reqSkills = internship.required_skills ? internship.required_skills.slice(0, 4) : [];
     const hasMoreSkills = internship.required_skills && internship.required_skills.length > 4;
 
+    const handleCardClick = () => {
+        trackEvent('internship_view', { company: internship.company, title: internship.title });
+        onClick();
+    };
+
+    const handleSaveClick = (e: React.MouseEvent) => {
+        trackEvent('internship_save', { internship_id: internship.id });
+        handleSave(internship.id, e);
+    };
+
     return (
         <div
-            onClick={onClick}
+            onClick={handleCardClick}
             className={`bg-card rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer relative group overflow-hidden shrink-0 ${isSelected ? 'border-2 border-accent' : 'border border-border hover:border-sidebar'
                 }`}
         >
@@ -67,7 +78,7 @@ export default function InternshipCard({ internship, isSaved, isSelected, onClic
                 {/* Right Action Column */}
                 <div className="flex sm:flex-col justify-between items-end sm:items-end mt-2 sm:mt-0 sm:min-w-[120px]">
                     <button
-                        onClick={(e) => handleSave(internship.id, e)}
+                        onClick={handleSaveClick}
                         className={`p-2 focus:outline-none transition-colors absolute top-3 right-3 sm:static ${isSaved ? 'text-red-500' : 'text-gray-300 hover:text-red-400'
                             }`}
                         title={isSaved ? "Sačuvana praksa" : "Sačuvaj praksu"}

@@ -4,6 +4,7 @@ import './globals.css';
 import { createClient } from '@/lib/supabase/server';
 import { PaletteProvider } from '@/components/PaletteProvider';
 import ClientShell from '@/components/ClientShell';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 const leagueSpartan = League_Spartan({
   subsets: ['latin', 'latin-ext'],
@@ -114,6 +115,11 @@ export default async function RootLayout({
             {children}
           </ClientShell>
         </PaletteProvider>
+        {process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        )}
+        {/* 100% privacy-first analytics */}
+        <script data-collect-dnt="true" async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
       </body>
     </html>
   );

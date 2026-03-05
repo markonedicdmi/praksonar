@@ -15,6 +15,7 @@ const LoginIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColo
 const RegisterIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>;
 const CloseIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
 const InfoIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const ShieldIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.956 11.956 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>;
 interface SidebarProps {
     user?: User | null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,10 +44,15 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
         if (onClose) onClose();
     };
 
+    const userName = profile?.full_name || user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Gost');
+    const userEmail = user?.email || 'Niste prijavljeni';
+    const isAdmin = userEmail !== 'Niste prijavljeni' && userEmail === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
     const loggedInNavItems: NavItem[] = [
         { name: 'Prakse', href: '/internships', icon: <BriefcaseIcon /> },
         { name: 'Moj Profil', href: '/profile', icon: <UserIcon /> },
         { name: 'CV Pisac', href: '/cv-writer', icon: <DocumentIcon />, badge: 'uskoro' },
+        ...(isAdmin ? [{ name: 'Admin', href: '/admin', icon: <ShieldIcon />, highlight: true }] : []),
         { name: 'O autoru', href: '/o-autoru', icon: <InfoIcon /> },
         { name: 'Podešavanja', href: '/settings', icon: <SettingsIcon /> },
     ];
@@ -61,8 +67,6 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
     ];
 
     const currentNavItems = user ? loggedInNavItems : guestNavItems;
-    const userName = profile?.full_name || user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Gost');
-    const userEmail = user?.email || 'Niste prijavljeni';
 
     return (
         <div className="w-64 bg-sidebar text-text-on-dark flex flex-col h-full flex-shrink-0 relative">
@@ -91,17 +95,24 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
             {/* User Profile Summary */}
             <div className="px-6 py-4 mb-4">
                 {user ? (
-                    <Link href="/profile" onClick={onClose} className="flex items-center gap-4 group">
+                    <Link href="/profile" onClick={onClose} className="flex items-center gap-4 group min-h-[44px]">
                         <div className="w-12 h-12 rounded-full bg-accent text-text-on-dark flex items-center justify-center font-medium text-lg overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform">
                             {userName.charAt(0).toUpperCase()}
                         </div>
-                        <div className="flex flex-col overflow-hidden">
+                        <div className="flex flex-col overflow-hidden w-full">
                             <span className="text-sm font-medium truncate group-hover:text-accent transition-colors">{userName}</span>
-                            <span className="text-xs text-sidebar-muted truncate">{userEmail}</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-sidebar-muted truncate">{userEmail}</span>
+                                {isAdmin && (
+                                    <span className="text-[10px] uppercase tracking-tighter bg-accent/20 text-accent px-1.5 py-0.5 rounded leading-none shrink-0 border border-accent/20">
+                                        Admin
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </Link>
                 ) : (
-                    <Link href="/auth/register" onClick={onClose} className="flex items-center gap-4 group cursor-pointer hover:bg-card/5 p-2 -m-2 rounded-lg transition-colors">
+                    <Link href="/auth/register" onClick={onClose} className="flex items-center gap-4 group cursor-pointer hover:bg-card/5 p-2 -m-2 min-h-[44px] rounded-lg transition-colors">
                         <div className="w-12 h-12 rounded-full bg-sidebar-muted/20 text-sidebar-muted flex items-center justify-center font-medium text-lg overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform">
                             ?
                         </div>
@@ -121,7 +132,7 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
                         return (
                             <div
                                 key={item.name}
-                                className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-sidebar-muted cursor-not-allowed opacity-60"
+                                className="flex items-center justify-between gap-3 px-4 py-3 min-h-[44px] rounded-lg text-sidebar-muted cursor-not-allowed opacity-60"
                             >
                                 <div className="flex items-center gap-3">
                                     {item.icon}
@@ -140,7 +151,7 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
                             key={item.href}
                             href={item.href}
                             onClick={onClose}
-                            className={`flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all ${isActive
+                            className={`flex items-center justify-between gap-3 px-4 py-3 min-h-[44px] rounded-lg transition-all ${isActive
                                 ? 'bg-accent text-text-on-dark font-medium shadow-md'
                                 : item.highlight
                                     ? 'border border-[#c99b33] text-[#c99b33] hover:bg-[#c99b33]/10'
@@ -168,7 +179,7 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
                     href="https://ko-fi.com/nedic"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-card border border-border text-accent px-6 py-3 rounded-lg font-medium hover:border-accent hover:text-accent transition-colors text-sm shadow-sm w-full justify-center"
+                    className="inline-flex items-center gap-2 bg-card border border-border text-accent px-6 py-3 min-h-[44px] rounded-lg font-medium hover:border-accent hover:text-accent transition-colors text-sm shadow-sm w-full justify-center"
                 >
                     <svg className="w-5 h-5 text-[#FF5E5B]" viewBox="0 0 50 50" fill="currentColor">
                         <path d="M 25 2 C 12.309288 2 2 12.309297 2 25 C 2 37.690703 12.309288 48 25 48 C 37.690712 48 48 37.690703 48 25 C 48 12.309297 37.690712 2 25 2 z M 25 4 C 36.609833 4 46 13.390175 46 25 C 46 36.609825 36.609833 46 25 46 C 13.390167 46 4 36.609825 4 25 C 4 13.390175 13.390167 4 25 4 z M 14.636719 14.394531 C 12.640426 14.394531 11 16.033004 11 18.029297 L 11 32.091797 C 11 34.573412 13.03401 36.605469 15.515625 36.605469 L 30.453125 36.605469 C 32.93474 36.605469 34.96875 34.573412 34.96875 32.091797 L 34.96875 31.072266 C 39.171089 30.320232 42.359577 26.577015 41.966797 22.103516 C 41.57761 17.671107 37.691909 14.394531 33.287109 14.394531 L 14.636719 14.394531 z M 14.636719 16.394531 L 33.287109 16.394531 C 36.70231 16.394531 39.679796 18.921705 39.974609 22.279297 C 40.301446 26.001745 37.498921 29.11721 33.910156 29.326172 L 32.96875 29.380859 L 32.96875 32.091797 C 32.96875 33.492182 31.85351 34.605469 30.453125 34.605469 L 15.515625 34.605469 C 14.11524 34.605466 13 33.492182 13 32.091797 L 13 18.029297 C 13 17.11359 13.721012 16.394531 14.636719 16.394531 z M 32.970703 17.818359 L 32.970703 27.935547 L 34.080078 27.8125 C 36.564518 27.536032 38.484375 25.398372 38.484375 22.863281 C 38.484375 20.312286 36.586714 18.133428 34.056641 17.912109 L 32.970703 17.818359 z M 19.908203 19.886719 C 17.66975 19.886719 15.832031 21.724438 15.832031 23.962891 C 15.832031 25.158867 16.358618 26.251124 17.203125 26.990234 L 17.148438 26.939453 L 22.544922 32.416016 L 27.941406 26.939453 L 27.886719 26.990234 C 28.73206 26.251729 29.259136 25.158315 29.257812 23.960938 C 29.256712 21.723385 27.41943 19.886719 25.181641 19.886719 C 24.16042 19.886719 23.259857 20.325278 22.544922 20.962891 C 21.829987 20.325278 20.929424 19.886719 19.908203 19.886719 z M 34.970703 20.451172 C 35.824808 20.958201 36.484375 21.744314 36.484375 22.863281 C 36.484375 23.933381 35.818128 24.720832 34.970703 25.246094 L 34.970703 20.451172 z M 22.892578 21.207031 L 22.9375 21.255859 C 22.9326 21.250259 22.924862 21.247757 22.919922 21.242188 C 22.909042 21.230967 22.903708 21.218161 22.892578 21.207031 z M 22.195312 21.208984 C 22.184532 21.219844 22.180472 21.233191 22.169922 21.244141 C 22.165222 21.249441 22.156994 21.250539 22.152344 21.255859 L 22.195312 21.208984 z M 19.908203 21.886719 C 20.522227 21.886719 21.062751 22.150773 21.431641 22.572266 L 21.455078 22.597656 L 21.478516 22.621094 C 21.545966 22.688544 21.622109 22.789954 21.677734 22.886719 L 22.541016 24.388672 L 23.410156 22.890625 C 23.468176 22.790735 23.547059 22.687803 23.615234 22.619141 L 23.636719 22.595703 L 23.658203 22.572266 C 24.027093 22.150773 24.567617 21.886719 25.181641 21.886719 C 26.335188 21.886719 27.257812 22.809343 27.257812 23.962891 C 27.258489 24.575513 26.990972 25.11688 26.570312 25.484375 L 26.542969 25.509766 L 26.517578 25.537109 L 22.544922 29.568359 L 18.546875 25.509766 L 18.519531 25.486328 C 18.098038 25.117438 17.832031 24.576915 17.832031 23.962891 C 17.832031 22.809343 18.754656 21.886719 19.908203 21.886719 z" />
@@ -179,7 +190,7 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
                 {user && (
                     <button
                         onClick={handleLogout}
-                        className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-sidebar-muted hover:bg-card/10 hover:text-text-on-dark transition-colors"
+                        className="flex items-center gap-3 px-4 py-3 min-h-[44px] w-full rounded-lg text-sidebar-muted hover:bg-card/10 hover:text-text-on-dark transition-colors"
                     >
                         <LogoutIcon />
                         Odjavi se

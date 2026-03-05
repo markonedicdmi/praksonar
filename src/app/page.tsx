@@ -3,12 +3,18 @@
 import Link from 'next/link';
 import StatBadge from '@/components/StatBadge';
 import { useEffect, useState } from 'react';
+import { trackEvent } from '@/lib/analytics';
 
 export default function HomePage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [isSkillChecked, setIsSkillChecked] = useState(false);
+  const [showCookieNotice, setShowCookieNotice] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('cookie_consent') !== 'dismissed') {
+      setShowCookieNotice(true);
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -102,7 +108,7 @@ export default function HomePage() {
               <p className="text-muted leading-relaxed mb-6">
                 Ogromna baza praksi dostupna 24/7, budi prvi koji će se prijaviti uz <span className="inline-block align-middle h-4 w-24 bg-current -mt-1 ml-1" style={{ WebkitMask: 'url("/logo with text updated.png") no-repeat center/contain', mask: 'url("/logo with text updated.png") no-repeat center/contain' }} aria-label="Praksonar" />.
               </p>
-              <button type="button" className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-app text-app-text rounded-lg border border-border hover:border-accent hover:text-accent transition-colors text-sm font-medium mt-auto group-hover:bg-accent/5">
+              <button type="button" onClick={() => trackEvent('scraper_refresh_clicked')} className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-app text-app-text rounded-lg border border-border hover:border-accent hover:text-accent transition-colors text-sm font-medium mt-auto group-hover:bg-accent/5">
                 <svg className="w-4 h-4 transition-transform group-hover:rotate-180 duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
@@ -231,6 +237,27 @@ export default function HomePage() {
         </footer>
 
       </div >
+
+      {/* COOKIE NOTICE */}
+      {showCookieNotice && (
+        <div className="fixed bottom-0 left-0 right-0 z-[9999] bg-sidebar text-text-on-dark py-2 px-4 flex justify-between items-center text-sm shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+          <p className="flex-1 text-center sm:text-left pr-4">
+            Praksonar koristi Google Analytics za analitiku poseta. Korišćenjem sajta prihvataš ovo.
+          </p>
+          <button
+            onClick={() => {
+              localStorage.setItem('cookie_consent', 'dismissed');
+              setShowCookieNotice(false);
+            }}
+            className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex-shrink-0"
+            aria-label="Zatvori obaveštenje"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
     </div >
   );
 }

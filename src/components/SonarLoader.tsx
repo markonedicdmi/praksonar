@@ -11,8 +11,19 @@ export default function SonarLoader({ size = 200 }: { size?: number }) {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        const width = canvas.width;
-        const height = canvas.height;
+        const dpr = window.devicePixelRatio || 1;
+        const logicalWidth = size;
+        const logicalHeight = size;
+
+        canvas.width = logicalWidth * dpr;
+        canvas.height = logicalHeight * dpr;
+        canvas.style.width = logicalWidth + 'px';
+        canvas.style.height = logicalHeight + 'px';
+
+        ctx.scale(dpr, dpr);
+
+        const width = logicalWidth;
+        const height = logicalHeight;
         const cx = width / 2;
         const cy = height / 2;
         const scale = size / 600;
