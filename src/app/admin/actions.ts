@@ -16,7 +16,7 @@ export async function deleteInternship(id: string) {
     return { success: true };
 }
 
-export async function insertInternship(data: any) {
+export async function insertInternship(data: Record<string, unknown>) {
     const supabase = getSupabaseAdmin();
 
     const payload = { ...data };

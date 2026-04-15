@@ -92,8 +92,8 @@ export default function ScraperSection() {
             const result = await triggerScraper();
             setActionMessage({ type: 'success', text: result.message });
             fetchData();
-        } catch (e: any) {
-            setActionMessage({ type: 'error', text: e.message || 'Greška pri pokretanju skrejpera.' });
+        } catch (e: unknown) {
+            setActionMessage({ type: 'error', text: (e instanceof Error ? e.message : 'Greška pri pokretanju skrejpera.') });
         } finally {
             setTriggering(false);
         }

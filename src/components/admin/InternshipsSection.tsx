@@ -1,12 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { deleteInternship, insertInternship } from '@/app/admin/actions';
 
+interface AdminInternship {
+    id: string;
+    title: string;
+    company: string;
+    location: string;
+    source_name: string;
+    source_url: string;
+    deadline: string | null;
+    created_at: string;
+    [key: string]: unknown;
+}
+
 export default function InternshipsSection() {
     const supabase = createClient();
-    const [internships, setInternships] = useState<any[]>([]);
+    const [internships, setInternships] = useState<AdminInternship[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Pagination
@@ -28,7 +40,7 @@ export default function InternshipsSection() {
         source_url: '', source_name: 'Manual', deadline: ''
     });
 
-    const fetchInternships = async () => {
+    const fetchInternships = useCallback(async () => {
         setLoading(true);
         let query = supabase
             .from('internships')
@@ -47,7 +59,7 @@ export default function InternshipsSection() {
             if (count !== null) setTotal(count);
         }
         setLoading(false);
-    };
+    }, [supabase, page, search]);
 
     useEffect(() => {
         // Basic debounce for search
@@ -55,7 +67,7 @@ export default function InternshipsSection() {
             fetchInternships();
         }, 300);
         return () => clearTimeout(timer);
-    }, [page, search]);
+    }, [page, search, fetchInternships]);
 
     const handleDelete = async (id: string) => {
         if (!confirm('Da li ste sigurni da želite da obrišete ovu praksu?')) return;
@@ -65,8 +77,8 @@ export default function InternshipsSection() {
             await deleteInternship(id);
             alert('Praksa obrisana');
             fetchInternships();
-        } catch (e: any) {
-            alert('Greška pri brisanju: ' + e.message);
+        } catch (e: unknown) {
+            alert('Greška pri brisanju: ' + (e instanceof Error ? e.message : 'Nepoznata greška'));
         } finally {
             setDeletingId(null);
         }
@@ -84,8 +96,8 @@ export default function InternshipsSection() {
                 source_url: '', source_name: 'Manual', deadline: ''
             });
             fetchInternships();
-        } catch (e: any) {
-            alert('Greška: ' + e.message);
+        } catch (e: unknown) {
+            alert('Greška: ' + (e instanceof Error ? e.message : 'Nepoznata greška'));
         }
     };
 

@@ -46,6 +46,7 @@ export default function SessionsSection() {
             }
         };
         fetchSessions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const parseUA = (ua: string) => {

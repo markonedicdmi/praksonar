@@ -68,17 +68,18 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ status: 'success', message: `Triggered ${triggerPromises.length} spiders.` });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Scraper trigger error:', error);
+        const errMsg = error instanceof Error ? error.message : 'Nepoznata greška';
 
         // Attempt to log error
         await supabaseAdmin.from('scraper_logs').insert({
             status: 'error',
             started_at: new Date().toISOString(),
             finished_at: new Date().toISOString(),
-            lines: [error.message || 'Nepoznata greška']
+            lines: [errMsg]
         });
 
-        return NextResponse.json({ error: error.message || 'Došlo je do greške.' }, { status: 500 });
+        return NextResponse.json({ error: errMsg }, { status: 500 });
     }
 }

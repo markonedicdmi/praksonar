@@ -11,10 +11,20 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { toggleWriterRequestStatus } from '@/app/admin/actions';
 
+interface WriterRequest {
+    id: string;
+    name: string;
+    email: string;
+    internship_url: string;
+    notes: string;
+    handled: boolean;
+    created_at: string;
+}
+
 export default function UsersSection() {
     const supabase = createClient();
     const [stats, setStats] = useState({ totalUsers: 0, newUsersWeek: 0, cvWaitlist: 0 });
-    const [requests, setRequests] = useState<any[]>([]);
+    const [requests, setRequests] = useState<WriterRequest[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchData = async () => {
@@ -53,6 +63,7 @@ export default function UsersSection() {
 
     useEffect(() => {
         fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleToggleStatus = async (id: string, currentStatus: boolean) => {
@@ -64,8 +75,8 @@ export default function UsersSection() {
             setRequests(requests.map(req =>
                 req.id === id ? { ...req, handled: !currentStatus } : req
             ));
-        } catch (e: any) {
-            alert('Greška pri izmeni statusa: ' + e.message);
+        } catch (e: unknown) {
+            alert('Greška pri izmeni statusa: ' + (e instanceof Error ? e.message : 'Nepoznata greška'));
         }
     };
 
