@@ -26,7 +26,11 @@ export default async function AdminPage() {
         redirect('/auth/login');
     }
 
-    if (user.email !== process.env.ADMIN_EMAIL) {
+    const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    const userEmail = (user.email || '').trim().toLowerCase();
+
+    if (userEmail !== adminEmail) {
+        console.log(`[Admin Access Denied] User email: "${userEmail}" | Required Admin: "${adminEmail}"`);
         redirect('/internships');
     }
 
