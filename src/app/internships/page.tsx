@@ -8,6 +8,7 @@ import InternshipCard from '@/components/InternshipCard';
 import InternshipDetail from '@/components/InternshipDetail';
 import InlineMessage from '@/components/InlineMessage';
 import SonarLoader from '@/components/SonarLoader';
+import ActiveUsersCounter from '@/components/ActiveUsersCounter';
 import { trackEvent } from '@/lib/analytics';
 
 // Filter option constants
@@ -26,10 +27,13 @@ const LANGUAGES = ['Sve', 'Engleski', 'Nemački'];
 const CITIES = ['Beograd', 'Novi Sad', 'Ostalo'];
 const SORT_OPTIONS = [
     { value: 'newest', label: 'Najnovije' },
+    { value: 'oldest', label: 'Najstarije' },
     { value: 'deadline', label: 'Rok prijave' },
+    { value: 'skills_asc', label: 'Najmanje veština' },
+    { value: 'paid_first', label: 'Plaćene prve' },
 ];
 // Source name options for multi-select checkboxes
-const SOURCE_OPTIONS = ['Infostud', 'Erasmus', 'Reddit'];
+const SOURCE_OPTIONS = ['Infostud', 'HelloWorld', 'Erasmus', 'LinkedIn'];
 
 function InternshipsContent() {
     const router = useRouter();
@@ -54,7 +58,9 @@ function InternshipsContent() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [scrollTop, setScrollTop] = useState(0);
     const [refreshCooldown, setRefreshCooldown] = useState(false);
+    const [refreshCount, setRefreshCount] = useState(0);
     const [advancedOpen, setAdvancedOpen] = useState(false);
+    const [excludedKeywords, setExcludedKeywords] = useState<string[]>([]);
 
     // --- URL-synced filter params ---
     const fieldParam = searchParams.get('field') || 'Sve oblasti';
@@ -95,8 +101,10 @@ function InternshipsContent() {
             if (sortParam === 'deadline') {
                 // nullsFirst: false puts nulls at end
                 query = query.order('deadline', { ascending: true, nullsFirst: false });
+            } else if (sortParam === 'oldest') {
+                query = query.order('created_at', { ascending: true });
             } else {
-                // Default: newest first
+                // Default: newest first (also used for skills_asc which is sorted client-side)
                 query = query.order('created_at', { ascending: false });
             }
 
@@ -224,11 +232,14 @@ function InternshipsContent() {
                 setIsLoggedIn(true);
                 const { data } = await supabase
                     .from('user_profiles')
-                    .select('skills, languages')
+                    .select('skills, languages, excluded_keywords')
                     .eq('id', user.id)
                     .single();
                 if (data) {
                     setUserProfile(data as ProfileForGap);
+                    if (data.excluded_keywords) {
+                        setExcludedKeywords(data.excluded_keywords);
+                    }
                 }
 
                 const { data: savedData } = await supabase
@@ -368,81 +379,68 @@ function InternshipsContent() {
 
         setIsRefreshing(true);
         setPageMessage(null);
+        setRefreshCount(c => c + 1);
 
         try {
-            const startRes = await fetch('/api/scrape', { method: 'POST' });
-            const startData = await startRes.json();
+            // Re-fetch latest internships from DB (scraping is admin/cron-only)
+            setPage(0);
+            setHasMore(true);
+            await fetchInternships(false, 0, false);
 
-            if (!startRes.ok) {
-                if (startRes.status === 409 && startData.runId) {
-                    setPageMessage({ type: 'info', text: 'Scraper je već aktivan, pratim status...' });
-                } else {
-                    throw new Error(startData.error || 'Greška pri pokretanju scrapera.');
-                }
-            }
+            const { data } = await supabase.from('internships').select('created_at').order('created_at', { ascending: false }).limit(1).single();
+            if (data) setLastRefreshed(data.created_at);
 
-            const runId = startData.runId;
-
-            const pollStatus = (): Promise<{ status: string; new_count?: number; error_message?: string }> => {
-                return new Promise((resolve, reject) => {
-                    const interval = setInterval(async () => {
-                        try {
-                            const pollRes = await fetch(`/api/scrape?runId=${runId}`);
-                            const pollData = await pollRes.json();
-
-                            if (pollData.status === 'completed' || pollData.status === 'failed') {
-                                clearInterval(interval);
-                                resolve(pollData);
-                            }
-                        } catch (err) {
-                            clearInterval(interval);
-                            reject(err);
-                        }
-                    }, 3000);
-
-                    setTimeout(() => {
-                        clearInterval(interval);
-                        reject(new Error('Scrapting traje predugo. Pokušajte ponovo.'));
-                    }, 5 * 60 * 1000);
-                });
-            };
-
-            const result = await pollStatus();
-
-            if (result.status === 'completed') {
-                await fetchInternships(false, 0, true);
-
-                const countMsg = result.new_count
-                    ? `Pronađeno ${result.new_count} praksi.`
-                    : 'Nema novih praksi.';
-                setPageMessage({ type: 'success', text: `Lista je uspešno ažurirana! ${countMsg}` });
-
-                const { data } = await supabase.from('internships').select('created_at').order('created_at', { ascending: false }).limit(1).single();
-                if (data) setLastRefreshed(data.created_at);
-            } else {
-                setPageMessage({
-                    type: 'error',
-                    text: result.error_message || 'Scraper nije uspeo. Pokušajte ponovo.',
-                });
-            }
+            setPageMessage({ type: 'success', text: 'Lista je osvežena!' });
         } catch (err) {
             console.error('Refresh error:', err);
             setPageMessage({
                 type: 'error',
-                text: err instanceof Error ? err.message : 'Greška pri osvežavanju liste.',
+                text: 'Greška pri osvežavanju liste.',
             });
         } finally {
             setIsRefreshing(false);
             setRefreshCooldown(true);
-            setTimeout(() => setRefreshCooldown(false), 30000);
+            setTimeout(() => setRefreshCooldown(false), 15000);
         }
     };
 
-    // Client-side saved filtering
-    const displayedInternships = internships.filter((internship) => {
+    // Client-side filtering: saved + excluded keywords
+    let displayedInternships = internships.filter((internship) => {
         if (showSaved && !savedInternships.includes(internship.id)) return false;
+
+        // Apply excluded keywords filter
+        if (excludedKeywords.length > 0) {
+            const lowerTitle = (internship.title || '').toLowerCase();
+            const lowerDesc = (internship.description || '').toLowerCase();
+            const lowerSkills = (internship.required_skills || []).map(s => s.toLowerCase()).join(' ');
+            const searchable = `${lowerTitle} ${lowerDesc} ${lowerSkills}`;
+
+            for (const keyword of excludedKeywords) {
+                if (searchable.includes(keyword.toLowerCase())) return false;
+            }
+        }
+
         return true;
     });
+
+    // Client-side sort: skills count (can't do in Supabase query)
+    if (sortParam === 'skills_asc') {
+        displayedInternships = [...displayedInternships].sort((a, b) => {
+            const aLen = (a.required_skills || []).length;
+            const bLen = (b.required_skills || []).length;
+            return aLen - bLen;
+        });
+    } else if (sortParam === 'paid_first') {
+        displayedInternships = [...displayedInternships].sort((a, b) => {
+            const isPaid = (text: string) => {
+                const lower = (text || '').toLowerCase();
+                return lower.includes('plaćen') || lower.includes('paid');
+            };
+            const aPaid = isPaid(a.title) || isPaid(a.description || '') ? 1 : 0;
+            const bPaid = isPaid(b.title) || isPaid(b.description || '') ? 1 : 0;
+            return bPaid - aPaid;
+        });
+    }
 
     // Dynamic height for sticky detail panel
     const headerSpace = 250;
@@ -461,7 +459,10 @@ function InternshipsContent() {
             {/* Header row */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
                 <div>
-                    <h1 className="text-3xl font-light text-app-text mb-2">Prakse</h1>
+                    <div className="flex items-center gap-4 mb-2">
+                        <h1 className="text-3xl font-light text-app-text">Prakse</h1>
+                        <ActiveUsersCounter />
+                    </div>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                         {/* Results count + sort */}
                         <div className="flex items-center gap-3">
@@ -489,7 +490,18 @@ function InternshipsContent() {
                                 disabled={isRefreshing || refreshCooldown}
                                 className="px-3 py-1.5 text-xs font-medium border border-sidebar text-sidebar hover:bg-sidebar hover:text-text-on-dark rounded-md flex items-center gap-2 transition-colors shadow-sm disabled:opacity-50"
                             >
-                                {isRefreshing ? <SonarLoader size={16} /> : <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>}
+                                <svg 
+                                    className="w-3.5 h-3.5" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24"
+                                    style={{ 
+                                        transform: `rotate(${refreshCount * 720}deg)`, 
+                                        transition: 'transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)' 
+                                    }}
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
                                 {isRefreshing ? 'Osvežavanje...' : 'Osveži listu'}
                             </button>
                             {lastRefreshed && (

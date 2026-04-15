@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import StatBadge from '@/components/StatBadge';
+import ActiveUsersCounter from '@/components/ActiveUsersCounter';
 import { useEffect, useState } from 'react';
 import { trackEvent } from '@/lib/analytics';
 
@@ -9,6 +10,13 @@ export default function HomePage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [isSkillChecked, setIsSkillChecked] = useState(false);
   const [showCookieNotice, setShowCookieNotice] = useState(false);
+  const [refreshCount, setRefreshCount] = useState(0);
+  const [uskoroKey, setUskoroKey] = useState(0);
+
+  const handleRefreshClick = () => {
+    trackEvent('scraper_refresh_clicked');
+    setRefreshCount(c => c + 1);
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined' && localStorage.getItem('cookie_consent') !== 'dismissed') {
@@ -52,11 +60,25 @@ export default function HomePage() {
         {/* SECTION 1 - HERO */}
         <section className="fade-in w-full flex flex-col items-center text-center mt-8 md:mt-16 mb-16 md:mb-24">
           <h1 className="text-4xl md:text-6xl font-bold leading-tight md:leading-tight text-app-text max-w-3xl mb-4">
-            Sve prakse <br className="hidden md:block" />
-            <span className="relative inline-block text-app-text">
-              na jednom mestu.
-              <svg className="absolute -bottom-4 md:-bottom-6 left-0 w-full" width="100%" height="20" viewBox="0 0 300 20" preserveAspectRatio="none">
-                <path d="M 0,10 Q 75,0 150,10 Q 225,20 300,10" stroke="var(--color-accent)" strokeWidth="4" fill="none" opacity="0.9" />
+            <span className="relative inline-block"><span className="relative z-10">Sve prakse</span><span className="absolute inset-0 bg-accent/30 -skew-x-2 rounded-sm" aria-hidden="true" /></span> <br className="hidden md:block" />
+            <span className="messy-highlight">
+              <span className="relative z-10 px-1">na jednom mestu.</span>
+              <svg 
+                className="absolute top-0 left-[-5%] w-[110%] h-[110%] z-[-1] opacity-90" 
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 300 100" 
+                preserveAspectRatio="none"
+              >
+                {/* Forward strokes (left to right) - varying lengths, smooth bleeding caps */}
+                <path className="highlighter-path-1" stroke="#c99b33" strokeOpacity="0.3" strokeWidth="25" strokeLinecap="round" fill="none" d="M10,40 Q150,25 285,35" />
+                <path className="highlighter-path-1" stroke="#c99b33" strokeOpacity="0.35" strokeWidth="20" strokeLinecap="round" fill="none" d="M2,50 Q150,35 295,45" />
+                <path className="highlighter-path-3" stroke="#c99b33" strokeOpacity="0.25" strokeWidth="30" strokeLinecap="round" fill="none" d="M15,25 Q150,15 280,30" />
+                <path className="highlighter-path-3" stroke="#c99b33" strokeOpacity="0.25" strokeWidth="15" strokeLinecap="round" fill="none" d="M30,15 Q150,15 260,20" />
+                
+                {/* Backward strokes (right to left) - varying lengths, smooth bleeding caps */}
+                <path className="highlighter-path-2" stroke="#c99b33" strokeOpacity="0.35" strokeWidth="30" strokeLinecap="round" fill="none" d="M300,55 Q150,75 10,50" />
+                <path className="highlighter-path-2" stroke="#c99b33" strokeOpacity="0.3" strokeWidth="20" strokeLinecap="round" fill="none" d="M285,75 Q150,85 20,65" />
+                <path className="highlighter-path-2" stroke="#c99b33" strokeOpacity="0.2" strokeWidth="15" strokeLinecap="round" fill="none" d="M270,85 Q150,90 35,75" />
               </svg>
             </span>
           </h1>
@@ -72,6 +94,7 @@ export default function HomePage() {
             </Link>
           </div>
           <StatBadge />
+          <ActiveUsersCounter />
         </section>
 
         {/* LOGO MARQUEE / STRIP */}
@@ -80,9 +103,8 @@ export default function HomePage() {
           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-14 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
             <span className="text-xl md:text-2xl font-bold tracking-tight">Infostud</span>
             <span className="text-xl md:text-2xl font-bold tracking-tight">HelloWorld</span>
-            <span className="text-xl md:text-2xl font-bold tracking-tight">Facebook grupe</span>
-            <span className="text-xl md:text-2xl font-bold tracking-tight">WhatsApp</span>
-            <span className="text-xl md:text-2xl font-bold tracking-tight">Telegram</span>
+            <span className="text-xl md:text-2xl font-bold tracking-tight">Erasmus+</span>
+            <span className="text-xl md:text-2xl font-bold tracking-tight">LinkedIn</span>
           </div>
         </section>
 
@@ -108,10 +130,12 @@ export default function HomePage() {
               <p className="text-muted leading-relaxed mb-6">
                 Ogromna baza praksi dostupna 24/7, budi prvi koji će se prijaviti uz <span className="inline-block align-middle h-4 w-24 bg-current -mt-1 ml-1" style={{ WebkitMask: 'url("/logo with text updated.png") no-repeat center/contain', mask: 'url("/logo with text updated.png") no-repeat center/contain' }} aria-label="Praksonar" />.
               </p>
-              <button type="button" onClick={() => trackEvent('scraper_refresh_clicked')} className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-app text-app-text rounded-lg border border-border hover:border-accent hover:text-accent transition-colors text-sm font-medium mt-auto group-hover:bg-accent/5">
-                <svg className="w-4 h-4 transition-transform group-hover:rotate-180 duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
+              <button type="button" onClick={handleRefreshClick} className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-app text-app-text rounded-lg border border-border hover:border-accent hover:text-accent transition-colors text-sm font-medium mt-auto group-hover:bg-accent/5">
+                <span style={{ transform: `rotate(${refreshCount * 720}deg)`, transition: 'transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)' }} className="flex items-center justify-center">
+                  <svg className="w-4 h-4 transition-transform group-hover:rotate-180 duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </span>
                 Osveži listu
               </button>
             </div>
@@ -147,8 +171,31 @@ export default function HomePage() {
             </div>
 
             {/* Card 3 */}
-            <div className="relative bg-card p-10 rounded-xl border border-border hover:border-accent/30 transition-all hover:-translate-y-1 hover:shadow-xl group">
-              <span className="absolute top-5 right-5 bg-app text-accent text-xs font-bold px-3 py-1.5 rounded-full border border-border">Uskoro</span>
+            <div onClick={() => setUskoroKey(k => k + 1)} className="relative bg-card p-10 rounded-xl border border-border hover:border-accent/30 transition-all hover:-translate-y-1 hover:shadow-xl group cursor-pointer">
+              <span className="absolute top-5 right-5 bg-app text-accent text-xs font-bold px-3 py-1.5 rounded-full border border-border overflow-visible">
+                {uskoroKey > 0 ? (
+                  <span className="messy-highlight">
+                    <span className="relative z-10 px-1 text-neutral-800">Uskoro</span>
+                    <svg 
+                      key={uskoroKey}
+                      className="absolute top-[-10%] left-[-15%] w-[130%] h-[120%] z-0 opacity-90 pointer-events-none" 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      viewBox="0 0 300 100" 
+                      preserveAspectRatio="none"
+                    >
+                      {/* Thicker marker lines for such a small badge */}
+                      <path className="highlighter-path-instant-1" stroke="#5c735e" strokeOpacity="0.4" strokeWidth="40" strokeLinecap="round" fill="none" d="M10,40 Q150,25 285,35" />
+                      <path className="highlighter-path-instant-1" stroke="#5c735e" strokeOpacity="0.4" strokeWidth="30" strokeLinecap="round" fill="none" d="M2,50 Q150,35 295,45" />
+                      <path className="highlighter-path-instant-3" stroke="#5c735e" strokeOpacity="0.3" strokeWidth="40" strokeLinecap="round" fill="none" d="M15,25 Q150,15 280,30" />
+                      
+                      <path className="highlighter-path-instant-2" stroke="#5c735e" strokeOpacity="0.4" strokeWidth="45" strokeLinecap="round" fill="none" d="M300,55 Q150,75 10,50" />
+                      <path className="highlighter-path-instant-2" stroke="#5c735e" strokeOpacity="0.35" strokeWidth="35" strokeLinecap="round" fill="none" d="M285,75 Q150,85 20,65" />
+                    </svg>
+                  </span>
+                ) : (
+                  "Uskoro"
+                )}
+              </span>
               <div className="w-14 h-14 bg-app rounded-xl flex items-center justify-center mb-6 group-hover:bg-accent/10 transition-colors">
                 <svg className="w-7 h-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />

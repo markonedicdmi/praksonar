@@ -4,13 +4,13 @@ import Image from 'next/image';
 
 export const metadata: Metadata = {
     title: 'O meni — Praksonar',
-    description: 'Praksonar je platforma za studente Srbije koja automatski prikuplja prakse. Napravio student sa novosadskog PMF-a.',
+    description: 'Praksonar je besplatna platforma za studente Srbije koja automatski prikuplja prakse sa svih sajtova. Napravio student za studente.',
     alternates: {
         canonical: '/o-meni',
     },
     openGraph: {
         title: 'O meni — Praksonar',
-        description: 'Praksonar je platforma za studente Srbije koja automatski prikuplja prakse. Napravio student sa novosadskog PMF-a.',
+        description: 'Praksonar je besplatna platforma za studente Srbije koja automatski prikuplja prakse sa svih sajtova. Napravio student za studente.',
         url: 'https://praksonar.com/o-meni',
     },
 };
@@ -25,7 +25,6 @@ export default function OMeniPage() {
                 <div className="flex flex-col sm:flex-row gap-6 items-start">
                     <div className="shrink-0">
                         <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-2 border-border shadow-sm">
-                            {/* Placeholder image, falls back to a solid color if not found initially */}
                             <Image
                                 src="/profile-placeholder.jpg"
                                 alt="Osnivač Praksonara"
@@ -38,12 +37,19 @@ export default function OMeniPage() {
 
                     <div className="flex-1 space-y-4">
                         <p>
-                            Praksonar je napravio student sa novosadskog PMF-a, za studente.{' '}
-                            <span className="text-sidebar-muted italic">[Ovde možeš dodati tekst o sebi, svojoj viziji i zašto si napravio Praksonar]</span>
+                            Zdravo! Ja sam student sa novosadskog PMF-a i napravio sam Praksonar zato što sam
+                            i sam prošao kroz beskonačno pretraživanje praksi po desetak sajtova. Znao sam da mora postojati
+                            bolji način — pa sam ga napravio.
                         </p>
 
                         <p>
-                            <span className="text-sidebar-muted italic">[PLACEHOLDER TEXT]</span>
+                            Praksonar automatski prikuplja prakse sa Infostuda, HelloWorld-a, LinkedIn-a, Erasmus+ programa
+                            i drugih izvora, sve na jednom mestu. Besplatan je, napravljen od studenta za studente, 
+                            i uvek će takav ostati.
+                        </p>
+
+                        <p>
+                            Ako ti je platforma korisna, podeli je sa kolegama. To je najbolja podrška. 🤝
                         </p>
                     </div>
                 </div>

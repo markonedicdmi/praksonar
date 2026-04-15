@@ -18,24 +18,26 @@
   CREATE POLICY "Enable insert for service role only" ON public.scraper_logs FOR INSERT WITH CHECK (true);
 */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { triggerScraper } from '@/app/admin/actions';
+
+interface ScraperLog {
+    id: string;
+    started_at: string;
+    finished_at?: string;
+    status: string;
+    lines?: string[];
+}
 
 export default function ScraperSection() {
     const supabase = createClient();
-    const [logs, setLogs] = useState<any[]>([]);
+    const [logs, setLogs] = useState<ScraperLog[]>([]);
     const [stats, setStats] = useState({ total: 0, today: 0, week: 0 });
-    const [loading, setLoading] = useState(true);
     const [triggering, setTriggering] = useState(false);
+    const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
-    useEffect(() => {
-        fetchData();
-        // Poll every 10 seconds
-        const interval = setInterval(fetchData, 10000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             // 1. Fetch last 20 rows from scraper_logs
             const { data: logsData } = await supabase
@@ -73,41 +75,32 @@ export default function ScraperSection() {
 
         } catch (error) {
             console.error('Error fetching scraper data:', error);
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [supabase]);
+
+    useEffect(() => {
+        fetchData();
+        // Poll every 10 seconds
+        const interval = setInterval(fetchData, 10000);
+        return () => clearInterval(interval);
+    }, [fetchData]);
 
     const handleTrigger = async () => {
         setTriggering(true);
+        setActionMessage(null);
         try {
-            // Get the session user token or just call the route. 
-            // The route expects `Authorization: Bearer CRON_SECRET` theoretically, 
-            // but client-side shouldn't have CRON_SECRET. 
-            // User requested the API to check for CRON_SECRET. Wait, admin is calling it from frontend.
-            // We'll need a way for the frontend to call this, maybe a server action is better or a proxy route.
-            // Wait, let's just use a proxy server action or fix the route to accept both.
-            // Actually, I'll update the route later. Let's do a simple POST for now.
-
-            const res = await fetch('/api/scraper/trigger', {
-                method: 'POST',
-            });
-
-            if (!res.ok) {
-                alert('Došlo je do greške pri pokretanju');
-                return;
-            }
-            alert('Skrejper pokrenut');
+            const result = await triggerScraper();
+            setActionMessage({ type: 'success', text: result.message });
             fetchData();
-        } catch (err) {
-            alert('Greška');
+        } catch (e: any) {
+            setActionMessage({ type: 'error', text: e.message || 'Greška pri pokretanju skrejpera.' });
         } finally {
             setTriggering(false);
         }
     };
 
     const handleStop = () => {
-        alert('Uskoro dostupno');
+        setActionMessage({ type: 'info', text: 'Zaustavljanje skrejpera još nije implementirano.' });
     };
 
     const latestLog = logs[0];
@@ -135,6 +128,18 @@ export default function ScraperSection() {
                     <div className="text-2xl font-bold text-accent mt-2">+{stats.week}</div>
                 </div>
             </div>
+
+            {/* Action Message */}
+            {actionMessage && (
+                <div className={`p-3 rounded-lg text-sm font-medium flex items-center justify-between ${
+                    actionMessage.type === 'success' ? 'bg-[#059669]/10 text-[#10b981] border border-[#10b981]/30' :
+                    actionMessage.type === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/30' :
+                    'bg-amber-400/10 text-amber-400 border border-amber-500/30'
+                }`}>
+                    <span>{actionMessage.text}</span>
+                    <button onClick={() => setActionMessage(null)} className="ml-4 hover:opacity-70 transition-opacity">✕</button>
+                </div>
+            )}
 
             {/* Control Row */}
             <div className="bg-card border border-border rounded-xl p-6">

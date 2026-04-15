@@ -62,6 +62,7 @@ export default async function RootLayout({
   const { data: { user } } = await supabase.auth.getUser();
 
   let userProfile = null;
+  let isAdmin = false;
   if (user) {
     const { data } = await supabase
       .from('user_profiles')
@@ -69,6 +70,7 @@ export default async function RootLayout({
       .eq('id', user.id)
       .single();
     userProfile = data;
+    isAdmin = user.email === process.env.ADMIN_EMAIL;
   }
 
   return (
@@ -111,25 +113,13 @@ export default async function RootLayout({
       </head>
       <body className={`${leagueSpartan.variable} antialiased font-sans font-light`}>
         <PaletteProvider>
-          <ClientShell user={user || null} profile={userProfile}>
+          <ClientShell user={user || null} profile={userProfile} isAdmin={isAdmin}>
             {children}
           </ClientShell>
         </PaletteProvider>
         {process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
         )}
-        {/* Google tag (gtag.js) */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-C2MVW2QV3W"></script>
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-C2MVW2QV3W');
-          `
-        }} />
-        {/* 100% privacy-first analytics */}
-        <script data-collect-dnt="true" async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
       </body>
     </html>
   );

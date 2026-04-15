@@ -27,6 +27,8 @@ yarn-error.log*
 
 # local env files
 .env*.local
+scraper/.env
+scraper/scrapinghub.yml
 
 # vercel
 .vercel
@@ -34,3 +36,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python
+__pycache__/
+*.pyc
+
+# sensitive local documentation
+access_praksonar.md*
+*.resolved

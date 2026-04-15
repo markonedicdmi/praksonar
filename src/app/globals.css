@@ -40,4 +40,45 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
+
+  @keyframes draw-path-stroke {
+    0% { stroke-dashoffset: 400; }
+    100% { stroke-dashoffset: 0; }
+  }
+
+  .messy-highlight {
+    position: relative;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .highlighter-path-1, .highlighter-path-2, .highlighter-path-3 {
+    stroke-dasharray: 400;
+    stroke-dashoffset: 400;
+    animation: draw-path-stroke 0.35s ease-out forwards;
+  }
+
+  /* Forward stroke: wait 2 seconds */
+  .highlighter-path-1 {
+    animation-delay: 2.0s;
+  }
+  
+  /* Backward stroke: wait until first stroke finishes (2.0 + 0.35 = 2.35s) */
+  .highlighter-path-2 {
+    animation-delay: 2.35s;
+  }
+  
+  /* Third messy filler stroke, overlaps */
+  .highlighter-path-3 {
+    animation-delay: 2.1s;
+  }
+
+  .highlighter-path-instant-1, .highlighter-path-instant-2, .highlighter-path-instant-3 {
+    stroke-dasharray: 400;
+    stroke-dashoffset: 400;
+    animation: draw-path-stroke 0.25s ease-out forwards;
+  }
+  .highlighter-path-instant-1 { animation-delay: 0.0s; }
+  .highlighter-path-instant-2 { animation-delay: 0.25s; }
+  .highlighter-path-instant-3 { animation-delay: 0.12s; }
 }

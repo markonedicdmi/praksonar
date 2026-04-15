@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import ScraperSection from '@/components/admin/ScraperSection';
 import InternshipsSection from '@/components/admin/InternshipsSection';
 import UsersSection from '@/components/admin/UsersSection';
+import SessionsSection from '@/components/admin/SessionsSection';
 
 export default async function AdminPage() {
     const cookieStore = cookies();
@@ -25,7 +26,7 @@ export default async function AdminPage() {
         redirect('/auth/login');
     }
 
-    if (user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+    if (user.email !== process.env.ADMIN_EMAIL) {
         redirect('/internships');
     }
 
@@ -38,6 +39,8 @@ export default async function AdminPage() {
 
             <div className="space-y-16">
                 <ScraperSection />
+                <hr className="border-border" />
+                <SessionsSection />
                 <hr className="border-border" />
                 <InternshipsSection />
                 <hr className="border-border" />

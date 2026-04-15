@@ -14,24 +14,15 @@ except ImportError:
     pass
 
 class SupabasePipeline:
-    def __init__(self, supabase_url, supabase_key):
-        self.url = supabase_url
-        self.key = supabase_key
+    def __init__(self):
+        self.url: str = os.environ.get("SUPABASE_URL", "")
+        self.key: str = os.environ.get("SUPABASE_KEY", "")
         self.supabase: Client | None = None
         self.new_internships_count = 0
-
-    @classmethod
-    def from_crawler(cls, crawler):
-        """Read Supabase credentials from Scrapy settings first, then env vars."""
-        url = crawler.settings.get('SUPABASE_URL') or os.environ.get('SUPABASE_URL', '')
-        key = crawler.settings.get('SUPABASE_KEY') or os.environ.get('SUPABASE_KEY', '')
-        return cls(url, key)
 
     def open_spider(self, spider):
         if not self.url or not self.key:
             spider.logger.warning("SUPABASE_URL or SUPABASE_KEY missing. Pipeline disabled.")
-            spider.logger.warning(f"  SUPABASE_URL present: {bool(self.url)}")
-            spider.logger.warning(f"  SUPABASE_KEY present: {bool(self.key)}")
             return
             
         try:

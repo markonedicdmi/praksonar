@@ -43,6 +43,15 @@ export default function LoginPage() {
             setError(translateAuthError(error.message));
             setLoading(false);
         } else {
+            // Track login session (fire and forget)
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                fetch('/api/track-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.id, email: user.email }),
+                }).catch(() => {}); // silent
+            }
             router.push('/internships');
             router.refresh(); // Refresh the root layout to update nav state
         }

@@ -10,9 +10,10 @@ interface ClientShellProps {
     user: User | null;
     profile: Record<string, unknown> | null;
     children: React.ReactNode;
+    isAdmin?: boolean;
 }
 
-export default function ClientShell({ user, profile, children }: ClientShellProps) {
+export default function ClientShell({ user, profile, children, isAdmin }: ClientShellProps) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const pathname = usePathname();
 
@@ -63,7 +64,7 @@ export default function ClientShell({ user, profile, children }: ClientShellProp
         <div className="flex h-screen overflow-hidden bg-app">
             {/* Desktop Sidebar */}
             <div className="hidden md:flex flex-shrink-0 border-r border-border">
-                <Sidebar user={user} profile={profile} />
+                <Sidebar user={user} profile={profile} isAdmin={isAdmin} />
             </div>
 
             {/* Mobile Sidebar Overlay */}
@@ -80,7 +81,7 @@ export default function ClientShell({ user, profile, children }: ClientShellProp
                 <div
                     className={`absolute inset-y-0 left-0 w-64 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
                 >
-                    <Sidebar user={user} profile={profile} onClose={() => setIsSidebarOpen(false)} />
+                    <Sidebar user={user} profile={profile} onClose={() => setIsSidebarOpen(false)} isAdmin={isAdmin} />
                 </div>
             </div>
 

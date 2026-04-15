@@ -45,3 +45,24 @@ export async function toggleWriterRequestStatus(id: string, handled: boolean) {
     }
     return { success: true };
 }
+
+export async function triggerScraper() {
+    // Server action runs server-side, so CRON_SECRET is safe here
+    const origin = process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : 'http://localhost:3000';
+
+    const res = await fetch(`${origin}/api/scraper/trigger`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${process.env.CRON_SECRET}` },
+    });
+
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Greška pri pokretanju skrejpera.');
+    }
+
+    const data = await res.json();
+    return { success: true, message: data.message || 'Skrejper pokrenut.' };
+}
+

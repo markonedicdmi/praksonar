@@ -6,7 +6,7 @@ TECH STACK:
 — Frontend + Backend: Next.js 14 with App Router, TypeScript, Tailwind CSS
 — Database + Auth: Supabase (PostgreSQL, Row Level Security)
 — Hosting: DigitalOcean Droplet (Ubuntu 22.04, Frankfurt region)
-— Scraper: Python service using Scrapy + Zyte Cloud (Scrapy Cloud), runs on a schedule
+— Scraper: Python service using Scrapy + Scrapy Cloud, runs on a schedule
 — AI: Claude API (Anthropic) for CV/cover letter generation
 — Payments: Ko-fi (donations at launch), Paddle (subscriptions — added later)
 — Error tracking: Sentry

@@ -21,6 +21,7 @@ interface SidebarProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     profile?: any;
     onClose?: () => void;
+    isAdmin?: boolean;
 }
 
 interface NavItem {
@@ -32,7 +33,7 @@ interface NavItem {
     highlight?: boolean;
 }
 
-export default function Sidebar({ user, profile, onClose }: SidebarProps) {
+export default function Sidebar({ user, profile, onClose, isAdmin }: SidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
     const supabase = createClient();
@@ -46,14 +47,13 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
 
     const userName = profile?.full_name || user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Gost');
     const userEmail = user?.email || 'Niste prijavljeni';
-    const isAdmin = userEmail !== 'Niste prijavljeni' && userEmail === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
     const loggedInNavItems: NavItem[] = [
         { name: 'Prakse', href: '/internships', icon: <BriefcaseIcon /> },
         { name: 'Moj Profil', href: '/profile', icon: <UserIcon /> },
         { name: 'CV Pisac', href: '/cv-writer', icon: <DocumentIcon />, badge: 'uskoro' },
         ...(isAdmin ? [{ name: 'Admin', href: '/admin', icon: <ShieldIcon />, highlight: true }] : []),
-        { name: 'O autoru', href: '/o-autoru', icon: <InfoIcon /> },
+        { name: 'O autoru', href: '/o-meni', icon: <InfoIcon /> },
         { name: 'Podešavanja', href: '/settings', icon: <SettingsIcon /> },
     ];
 
@@ -62,7 +62,7 @@ export default function Sidebar({ user, profile, onClose }: SidebarProps) {
         { name: 'Prijavi se', href: '/auth/login', icon: <LoginIcon /> },
         { name: 'Registruj se', href: '/auth/register', icon: <RegisterIcon />, highlight: true },
         { name: 'CV Pisac', href: '/cv-writer', icon: <DocumentIcon />, badge: 'uskoro' },
-        { name: 'O autoru', href: '/o-autoru', icon: <InfoIcon /> },
+        { name: 'O autoru', href: '/o-meni', icon: <InfoIcon /> },
         { name: 'Podešavanja', href: '/settings', icon: <SettingsIcon /> }
     ];
 

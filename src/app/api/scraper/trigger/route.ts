@@ -7,14 +7,14 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const apiKey = process.env.ZYTE_API_KEY;
+    const apiKey = process.env.SCRAPY_CLOUD_API_KEY;
     if (!apiKey) {
-        return NextResponse.json({ error: 'ZYTE_API_KEY environment variable is not set.' }, { status: 500 });
+        return NextResponse.json({ error: 'SCRAPY_CLOUD_API_KEY environment variable is not set.' }, { status: 500 });
     }
 
-    const projectId = process.env.ZYTE_PROJECT_ID;
+    const projectId = process.env.SCRAPY_CLOUD_PROJECT_ID;
     if (!projectId) {
-        return NextResponse.json({ error: 'ZYTE_PROJECT_ID environment variable is not set.' }, { status: 500 });
+        return NextResponse.json({ error: 'SCRAPY_CLOUD_PROJECT_ID environment variable is not set.' }, { status: 500 });
     }
 
     const supabaseAdmin = createClient(
@@ -23,6 +23,9 @@ export async function POST(req: Request) {
     );
 
     try {
+        console.log(`[cron] Triggering scraper via Scrapy Cloud API for project ${projectId}...`);
+
+        // Get list of all deployed spiders
         const listResponse = await fetch(`https://app.zyte.com/api/spiders/list.json?project=${projectId}`, {
             headers: {
                 'Authorization': `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`
